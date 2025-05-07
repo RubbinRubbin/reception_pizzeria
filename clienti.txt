@@ -1,8 +1,0 @@
-# ELENCO CLIENTI PIZZERIA
-# Formato: Nome, Telefono, Indirizzo, Data aggiornamento
-#======================================================================
-
-Nome: matteo
-Telefono: 3279913882
-Indirizzo: via delle selve nuove 14
-Ultimo aggiornamento: 07/05/2025 16:18:30
