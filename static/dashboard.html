@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pizzeria da Mario - Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        :root {
+            --red: #ce2b37;       /* Rosso bandiera italiana */
+            --green: #009246;     /* Verde bandiera italiana */
+            --white: #ffffff;     /* Bianco */
+            --light-grey: #f8f8f8;
+            --dark-grey: #333333;
+            --border-radius: 12px;
+            --transition: 0.3s ease;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Oxygen, Ubuntu, sans-serif;
+        }
+        
+        body {
+            background-color: var(--light-grey);
+            color: var(--dark-grey);
+            line-height: 1.5;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px;
+            background-color: var(--white);
+            border-bottom: 3px solid var(--red);
+            margin-bottom: 20px;
+            border-radius: var(--border-radius) var(--border-radius) 0 0;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background-color: var(--red);
+            color: var(--white);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .logo-icon i {
+            font-size: 20px;
+        }
+        
+        .logo h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--dark-grey);
+        }
+        
+        .user-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logout-button {
+            background-color: var(--red);
+            color: var(--white);
+            border: none;
+            border-radius: var(--border-radius);
+            padding: 8px 15px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color var(--transition);
+        }
+        
+        .logout-button:hover {
+            background-color: #a82128;
+        }
+        
+        .dashboard-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .card {
+            background-color: var(--white);
+            border-radius: var(--border-radius);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .card h2 {
+            margin-bottom: 15px;
+            color: var(--dark-grey);
+            font-size: 20px;
+            border-bottom: 2px solid var(--light-grey);
+            padding-bottom: 10px;
+        }
+        
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        
+        .stat-card {
+            background-color: var(--light-grey);
+            border-radius: var(--border-radius);
+            padding: 15px;
+            text-align: center;
+            transition: transform var(--transition);
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-card.green {
+            border-left: 4px solid var(--green);
+        }
+        
+        .stat-card.red {
+            border-left: 4px solid var(--red);
+        }
+        
+        .stat-title {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .stat-value {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--dark-grey);
+        }
+        
+        .orders-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        
+        .orders-table th, .orders-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .orders-table th {
+            background-color: var(--light-grey);
+            font-weight: 600;
+            color: var(--dark-grey);
+        }
+        
+        .orders-table tr:hover {
+            background-color: var(--light-grey);
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .status-completed {
+            background-color: var(--green);
+            color: var(--white);
+        }
+        
+        .status-pending {
+            background-color: #ffc107;
+            color: var(--dark-grey);
+        }
+        
+        .status-cancelled {
+            background-color: var(--red);
+            color: var(--white);
+        }
+        
+        .status-processing {
+            background-color: #17a2b8;
+            color: var(--white);
+        }
+        
+        .chart-container {
+            height: 300px;
+            position: relative;
+        }
+        
+        .refresh-button {
+            background-color: var(--green);
+            color: var(--white);
+            border: none;
+            border-radius: var(--border-radius);
+            padding: 8px 15px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 10px;
+        }
+        
+        .refresh-button:hover {
+            background-color: #007e3a;
+        }
+        
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+            font-size: 16px;
+            color: #666;
+        }
+        
+        .loading i {
+            margin-right: 10px;
+            animation: spin 1s infinite linear;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .full-width {
+            grid-column: span 2;
+        }
+        
+        .meta-info {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        /* Decorative elements */
+        .italian-stripe {
+            height: 3px;
+            width: 100%;
+            display: flex;
+            margin-top: -3px; /* Sovrappone il bordo inferiore dell'header */
+        }
+
+        .italian-stripe div {
+            flex: 1;
+            height: 100%;
+        }
+
+        .stripe-green {
+            background-color: var(--green);
+        }
+
+        .stripe-white {
+            background-color: var(--white);
+        }
+
+        .stripe-red {
+            background-color: var(--red);
+        }
+        
+        /* Action buttons */
+        .action-button {
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: background-color 0.2s;
+        }
+        
+        .print-button {
+            background-color: var(--green);
+            color: white;
+        }
+        
+        .print-button:hover {
+            background-color: #007e3a;
+        }
+        
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            overflow: auto;
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 50px auto;
+            padding: 30px;
+            border-radius: var(--border-radius);
+            max-width: 600px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+        
+        .close-modal {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+        
+        .modal-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .order-details {
+            font-family: monospace;
+            white-space: pre-line;
+            line-height: 1.5;
+            background-color: var(--light-grey);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+        }
+        
+        .modal-actions {
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        /* Responsive styles */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .dashboard-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .full-width {
+                grid-column: span 1;
+            }
+            
+            .stat-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .logo h1 {
+                font-size: 18px;
+            }
+            
+            .modal-content {
+                margin: 20px 10px;
+                padding: 15px;
+            }
+        }
+        
+        /* Print styles */
+        @media print {
+            * {
+                background-color: white !important;
+                color: black !important;
+                box-shadow: none !important;
+            }
+            
+            .container, header, .dashboard-content, .card, .no-print {
+                display: none !important;
+            }
+            
+            .print-content {
+                display: block !important;
+                font-family: monospace;
+                white-space: pre-line;
+                line-height: 1.4;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-pizza-slice"></i>
+                </div>
+                <h1>Pizzeria da Mario - Dashboard</h1>
+            </div>
+            <div class="user-actions">
+                <button class="logout-button" id="logout-button">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </header>
+        <div class="italian-stripe">
+            <div class="stripe-green"></div>
+            <div class="stripe-white"></div>
+            <div class="stripe-red"></div>
+        </div>
+        
+        <div id="dashboard-loading" class="loading">
+            <i class="fas fa-spinner"></i> Caricamento dati in corso...
+        </div>
+        
+        <div id="dashboard-content" class="dashboard-content" style="display: none;">
+            <!-- Statistiche generali -->
+            <div class="card">
+                <h2><i class="fas fa-chart-pie"></i> Statistiche generali</h2>
+                <div class="stat-grid">
+                    <div class="stat-card green">
+                        <div class="stat-title">Ordini totali</div>
+                        <div class="stat-value" id="total-orders">0</div>
+                    </div>
+                    <div class="stat-card red">
+                        <div class="stat-title">Fatturato totale</div>
+                        <div class="stat-value" id="total-revenue">€0</div>
+                    </div>
+                    <div class="stat-card green">
+                        <div class="stat-title">Media per ordine</div>
+                        <div class="stat-value" id="avg-order">€0</div>
+                    </div>
+                    <div class="stat-card red">
+                        <div class="stat-title">Pizza più venduta</div>
+                        <div class="stat-value" id="top-pizza">-</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Grafico vendite per tipo di pizza -->
+            <div class="card">
+                <h2><i class="fas fa-chart-bar"></i> Vendite per tipo di pizza</h2>
+                <div class="chart-container">
+                    <canvas id="pizza-chart"></canvas>
+                </div>
+            </div>
+            
+            <!-- Grafico andamento vendite -->
+            <div class="card full-width">
+                <h2><i class="fas fa-chart-line"></i> Andamento vendite</h2>
+                <div class="chart-container">
+                    <canvas id="sales-chart"></canvas>
+                </div>
+            </div>
+            
+            <!-- Tabella ordini recenti -->
+            <div class="card full-width">
+                <h2><i class="fas fa-list"></i> Ordini recenti</h2>
+                <div class="table-responsive">
+                    <table class="orders-table" id="orders-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Cliente</th>
+                                <th>Data</th>
+                                <th>Prodotti</th>
+                                <th>Totale</th>
+                                <th>Stato</th>
+                                <th>Azioni</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orders-body">
+                            <!-- Righe della tabella inserite dinamicamente -->
+                        </tbody>
+                    </table>
+                </div>
+                <button class="refresh-button" id="refresh-button">
+                    <i class="fas fa-sync-alt"></i> Aggiorna dati
+                </button>
+                <div class="meta-info" id="last-updated"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal per visualizzare e stampare la comanda -->
+    <div id="order-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" id="close-modal">&times;</span>
+            <div class="modal-header">
+                <h2>Dettagli Comanda</h2>
+            </div>
+            <div id="order-details" class="order-details">
+                <!-- Contenuto della comanda -->
+            </div>
+            <div class="modal-actions">
+                <button class="action-button" id="close-button">Chiudi</button>
+                <button class="action-button print-button" id="print-button">
+                    <i class="fas fa-print"></i> Stampa
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Contenuto nascosto per la stampa -->
+    <div id="print-content" class="print-content" style="display: none;"></div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Riferimenti agli elementi DOM
+            const dashboardLoading = document.getElementById('dashboard-loading');
+            const dashboardContent = document.getElementById('dashboard-content');
+            const totalOrdersElement = document.getElementById('total-orders');
+            const totalRevenueElement = document.getElementById('total-revenue');
+            const avgOrderElement = document.getElementById('avg-order');
+            const topPizzaElement = document.getElementById('top-pizza');
+            const ordersBody = document.getElementById('orders-body');
+            const refreshButton = document.getElementById('refresh-button');
+            const lastUpdatedElement = document.getElementById('last-updated');
+            const logoutButton = document.getElementById('logout-button');
+            
+            // Riferimenti per la modal
+            const orderModal = document.getElementById('order-modal');
+            const closeModal = document.getElementById('close-modal');
+            const closeButton = document.getElementById('close-button');
+            const printButton = document.getElementById('print-button');
+            const orderDetails = document.getElementById('order-details');
+            const printContent = document.getElementById('print-content');
+            
+            // Riferimenti per i grafici
+            const pizzaChartCanvas = document.getElementById('pizza-chart');
+            const salesChartCanvas = document.getElementById('sales-chart');
+            
+            let pizzaChart = null;
+            let salesChart = null;
+            
+            // API endpoint per ottenere le statistiche della dashboard
+            const STATS_API_URL = '/api/dashboard/stats';
+            
+            // Funzione per caricare i dati
+            async function loadData() {
+                try {
+                    dashboardLoading.style.display = 'flex';
+                    dashboardContent.style.display = 'none';
+                    
+                    // Ottieni i dati dalla API che accede a Supabase
+                    const response = await fetch(STATS_API_URL, {
+                        headers: {
+                            'Authorization': `Bearer ${sessionStorage.getItem('token')}`
+                        }
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        updateDashboard(data.data);
+                    } else {
+                        throw new Error(data.error || 'Errore nel caricamento dei dati');
+                    }
+                    
+                    const now = new Date();
+                    lastUpdatedElement.textContent = `Ultimo aggiornamento: ${now.toLocaleString('it-IT')}`;
+                    
+                    dashboardLoading.style.display = 'none';
+                    dashboardContent.style.display = 'grid';
+                    
+                } catch (error) {
+                    console.error('Errore nel caricamento dei dati:', error);
+                    
+                    if (error.message.includes('401') || error.message.includes('unauthorized')) {
+                        alert('Sessione scaduta. Effettua nuovamente il login.');
+                        // Reindirizza alla pagina di login
+                        sessionStorage.removeItem('authenticated');
+                        sessionStorage.removeItem('token');
+                        window.location.href = 'login.html';
+                    } else {
+                        alert('Si è verificato un errore durante il caricamento dei dati. Per favore, riprova più tardi.');
+                        dashboardLoading.style.display = 'none';
+                        dashboardContent.innerHTML = '<div class="card full-width"><p style="text-align:center; padding: 20px;">Impossibile caricare i dati. Controlla la connessione e riprova.</p></div>';
+                        dashboardContent.style.display = 'block';
+                    }
+                }
+            }
+            
+            // Funzione per aggiornare la dashboard con i dati
+            function updateDashboard(data) {
+                // Aggiorna i contatori
+                totalOrdersElement.textContent = data.total_orders;
+                totalRevenueElement.textContent = `€${parseFloat(data.total_revenue).toFixed(2)}`;
+                avgOrderElement.textContent = `€${parseFloat(data.avg_order).toFixed(2)}`;
+                topPizzaElement.textContent = data.top_pizza;
+                
+                // Aggiorna la tabella degli ordini
+                updateOrdersTable(data.recent_orders);
+                
+                // Aggiorna i grafici
+                updatePizzaChart(data.pizza_chart_data);
+                updateSalesChart(data.sales_chart_data);
+            }
+            
+            // Funzione per aggiornare la tabella degli ordini
+            function updateOrdersTable(orders) {
+                ordersBody.innerHTML = '';
+                
+                if (!orders || orders.length === 0) {
+                    ordersBody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Nessun ordine recente da mostrare</td></tr>';
+                    return;
+                }
+                
+                orders.forEach(order => {
+                    const row = document.createElement('tr');
+                    
+                    function getStatusClass(status) {
+                        if (!status) return ''; // Gestisce status nullo o vuoto
+                        switch (status.toLowerCase()) {
+                            case 'completato': return 'status-completed';
+                            case 'in attesa': return 'status-pending';
+                            case 'in elaborazione': return 'status-processing';
+                            case 'annullato': return 'status-cancelled';
+                            default: return ''; // Badge neutro per stati sconosciuti
+                        }
+                    }
+                    
+                    const orderDate = new Date(order.data_ordine);
+                    const formattedDate = orderDate.toLocaleString('it-IT', {
+                        day: '2-digit', month: '2-digit', year: 'numeric',
+                        hour: '2-digit', minute: '2-digit'
+                    });
+                    
+                    // Salva l'ID della comanda (importante per la stampa)
+                    const orderId = order.comanda_id || order.id || '-';
+                    
+                    row.innerHTML = `
+                        <td>#${orderId}</td>
+                        <td>${order.cliente || '-'}</td>
+                        <td>${formattedDate}</td>
+                        <td>${order.prodotti || '-'}</td>
+                        <td>€${parseFloat(order.totale || 0).toFixed(2)}</td>
+                        <td><span class="status-badge ${getStatusClass(order.stato || '')}">${order.stato || '-'}</span></td>
+                        <td>
+                            <button class="action-button print-button" data-id="${orderId}">
+                                <i class="fas fa-print"></i> Stampa
+                            </button>
+                        </td>
+                    `;
+                    ordersBody.appendChild(row);
+                    
+                    // Aggiungi l'event listener al pulsante di stampa
+                    const printOrderButton = row.querySelector('.print-button');
+                    printOrderButton.addEventListener('click', function() {
+                        const orderId = this.getAttribute('data-id');
+                        getOrderDetails(orderId);
+                    });
+                });
+            }
+            
+            // Funzione per recuperare i dettagli di un ordine
+            async function getOrderDetails(orderId) {
+                try {
+                    orderDetails.textContent = "Caricamento dettagli comanda...";
+                    orderModal.style.display = 'block';
+                    
+                    // Endpoint per ottenere i dettagli di una comanda specifica
+                    const response = await fetch(`/api/order/${orderId}`, {
+                        headers: {
+                            'Authorization': `Bearer ${sessionStorage.getItem('token')}`
+                        }
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Errore nel recupero dei dettagli della comanda');
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if (data.success && data.data) {
+                        // Mostra i dettagli della comanda nella modal
+                        displayOrderDetails(data.data);
+                    } else {
+                        orderDetails.textContent = 'Errore: ' + (data.error || 'Impossibile recuperare i dettagli della comanda');
+                    }
+                } catch (error) {
+                    console.error('Errore nel recupero dei dettagli:', error);
+                    orderDetails.textContent = 'Errore nel recupero dei dettagli della comanda. Riprova più tardi.';
+                }
+            }
+            
+            // Funzione per visualizzare i dettagli dell'ordine
+            function displayOrderDetails(orderData) {
+                // Verifica se abbiamo il contenuto formattato per la stampa
+                if (orderData.testo) {
+                    // Usa il testo pre-formattato dall'API
+                    orderDetails.textContent = orderData.testo;
+                    printContent.textContent = orderData.testo;
+                } else {
+                    // Crea una formattazione di fallback
+                    const details = [];
+                    
+                    // Intestazione
+                    details.push("================================");
+                    details.push(`ORDINE #${orderData.comanda_id || orderData.id || '-'}`);
+                    details.push("================================");
+                    
+                    // Info cliente
+                    details.push(`Cliente: ${orderData.nome_cliente || '-'}`);
+                    details.push(`Telefono: ${orderData.telefono_cliente || '-'}`);
+                    details.push(`Indirizzo: ${orderData.indirizzo_cliente || '-'}`);
+                    details.push(`Data: ${formatDate(orderData.data)}`);
+                    details.push(`Ora consegna: ${orderData.orario_consegna || '-'}`);
+                    details.push("--------------------------------");
+                    
+                    // Prodotti
+                    details.push("PRODOTTI:");
+                    
+                    // Pizze
+                    if (orderData.pizze && orderData.pizze.length > 0) {
+                        details.push("\nPIZZE:");
+                        orderData.pizze.forEach(pizza => {
+                            if (typeof pizza === 'object') {
+                                const prezzo = parseFloat(pizza.prezzo || 0).toFixed(2);
+                                const quantita = parseInt(pizza.quantita || 1);
+                                const totale = (prezzo * quantita).toFixed(2);
+                                details.push(`  ${quantita}x ${pizza.nome} - €${prezzo}/cad = €${totale}`);
+                            } else {
+                                details.push(`  ${pizza}`);
+                            }
+                        });
+                    }
+                    
+                    // Fritti
+                    if (orderData.fritti && orderData.fritti.length > 0) {
+                        details.push("\nFRITTI:");
+                        orderData.fritti.forEach(fritto => {
+                            if (typeof fritto === 'object') {
+                                const prezzo = parseFloat(fritto.prezzo || 0).toFixed(2);
+                                const quantita = parseInt(fritto.quantita || 1);
+                                const totale = (prezzo * quantita).toFixed(2);
+                                details.push(`  ${quantita}x ${fritto.nome} - €${prezzo}/cad = €${totale}`);
+                            } else {
+                                details.push(`  ${fritto}`);
+                            }
+                        });
+                    }
+                    
+                    // Bevande
+                    if (orderData.bevande && orderData.bevande.length > 0) {
+                        details.push("\nBEVANDE:");
+                        orderData.bevande.forEach(bevanda => {
+                            if (typeof bevanda === 'object') {
+                                const prezzo = parseFloat(bevanda.prezzo || 0).toFixed(2);
+                                const quantita = parseInt(bevanda.quantita || 1);
+                                const totale = (prezzo * quantita).toFixed(2);
+                                details.push(`  ${quantita}x ${bevanda.nome} - €${prezzo}/cad = €${totale}`);
+                            } else {
+                                details.push(`  ${bevanda}`);
+                            }
+                        });
+                    }
+                    
+                    // Pagamento e totale
+                    details.push("--------------------------------");
+                    details.push(`Metodo pagamento: ${orderData.metodo_pagamento || '-'}`);
+                    details.push(`TOTALE: €${parseFloat(orderData.totale || 0).toFixed(2)}`);
+                    details.push("================================");
+                    details.push("Grazie per aver scelto Pizzeria da Mario!");
+                    
+                    const formattedDetails = details.join('\n');
+                    orderDetails.textContent = formattedDetails;
+                    printContent.textContent = formattedDetails;
+                }
+            }
+            
+            // Helper: Formatta una data
+            function formatDate(dateString) {
+                if (!dateString) return '-';
+                const date = new Date(dateString);
+                return date.toLocaleString('it-IT', {
+                    day: '2-digit', month: '2-digit', year: 'numeric',
+                    hour: '2-digit', minute: '2-digit'
+                });
+            }
+            
+            // Funzione per aggiornare il grafico delle pizze
+            function updatePizzaChart(pizzaData) {
+                if (!pizzaChartCanvas) return; // Esce se il canvas non esiste
+
+                const labels = [];
+                const data = [];
+                
+                // Gestione caso in cui pizzaData sia vuoto o nullo
+                if (!pizzaData || pizzaData.length === 0) {
+                    const ctx = pizzaChartCanvas.getContext('2d');
+                    ctx.clearRect(0, 0, pizzaChartCanvas.width, pizzaChartCanvas.height);
+                    ctx.textAlign = 'center';
+                    ctx.fillStyle = '#666';
+                    ctx.fillText('Nessun dato per il grafico delle pizze', pizzaChartCanvas.width / 2, pizzaChartCanvas.height / 2);
+                    return;
+                }
+                
+                // Ordina le pizze per quantità e prendi le prime 5
+                const sortedPizzas = [...pizzaData].sort((a, b) => b.value - a.value).slice(0, 5);
+                
+                sortedPizzas.forEach(pizza => {
+                    labels.push(pizza.name);
+                    data.push(pizza.value);
+                });
+                
+                const backgroundColor = ['#ce2b37', '#009246', '#ff9800', '#2196f3', '#9c27b0'];
+                
+                if (pizzaChart) {
+                    pizzaChart.destroy();
+                    pizzaChart = null;
+                }
+                
+                const ctx = pizzaChartCanvas.getContext('2d');
+                ctx.clearRect(0, 0, pizzaChartCanvas.width, pizzaChartCanvas.height); // Pulisce il canvas
+
+                if (labels.length === 0) {
+                    // Disegna un messaggio se non ci sono dati
+                    ctx.textAlign = 'center';
+                    ctx.fillStyle = '#666';
+                    ctx.fillText('Nessun dato per il grafico delle pizze', pizzaChartCanvas.width / 2, pizzaChartCanvas.height / 2);
+                    return;
+                }
+
+                pizzaChart = new Chart(pizzaChartCanvas, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: data,
+                            backgroundColor: backgroundColor.slice(0, data.length),
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom' }, title: { display: false } }
+                    }
+                });
+            }
+            
+            // Funzione per aggiornare il grafico delle vendite
+            function updateSalesChart(salesData) {
+                if (!salesChartCanvas) return; // Esce se il canvas non esiste
+
+                // Gestione caso in cui salesData sia vuoto o nullo
+                if (!salesData || salesData.length === 0) {
+                    const ctx = salesChartCanvas.getContext('2d');
+                    ctx.clearRect(0, 0, salesChartCanvas.width, salesChartCanvas.height);
+                    ctx.textAlign = 'center';
+                    ctx.fillStyle = '#666';
+                    ctx.fillText('Nessun dato per il grafico vendite', salesChartCanvas.width / 2, salesChartCanvas.height / 2);
+                    return;
+                }
+                
+                // Ordina i dati per data
+                salesData.sort((a, b) => new Date(a.date) - new Date(b.date));
+                
+                // Prendi solo gli ultimi 7 giorni
+                const recentSales = salesData.slice(-7);
+                
+                const labels = recentSales.map(item => 
+                    new Date(item.date).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' })
+                );
+                const data = recentSales.map(item => item.amount);
+                
+                if (salesChart) {
+                    salesChart.destroy();
+                    salesChart = null;
+                }
+                
+                const ctx = salesChartCanvas.getContext('2d');
+                ctx.clearRect(0, 0, salesChartCanvas.width, salesChartCanvas.height); // Pulisce il canvas
+
+                if (labels.length === 0) {
+                    // Disegna un messaggio se non ci sono dati
+                    ctx.textAlign = 'center';
+                    ctx.fillStyle = '#666';
+                    ctx.fillText('Nessun dato per il grafico vendite', salesChartCanvas.width / 2, salesChartCanvas.height / 2);
+                    return;
+                }
+                
+                salesChart = new Chart(salesChartCanvas, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Vendite (€)', data: data,
+                            borderColor: '#009246', backgroundColor: 'rgba(0, 146, 70, 0.1)',
+                            borderWidth: 2, fill: true, tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        scales: { y: { beginAtZero: true, ticks: { callback: value => '€' + value }}},
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
+            
+            // Gestione eventi per la modal
+            closeModal.addEventListener('click', function() {
+                orderModal.style.display = 'none';
+            });
+            
+            closeButton.addEventListener('click', function() {
+                orderModal.style.display = 'none';
+            });
+            
+            printButton.addEventListener('click', function() {
+                // Apre la finestra di stampa con il contenuto della comanda
+                window.print();
+            });
+            
+            // Chiudi la modal se l'utente fa clic al di fuori di essa
+            window.addEventListener('click', function(event) {
+                if (event.target === orderModal) {
+                    orderModal.style.display = 'none';
+                }
+            });
+            
+            // Gestore eventi per il pulsante di aggiornamento
+            refreshButton.addEventListener('click', function() {
+                loadData();
+            });
+            
+            // Gestore eventi per il pulsante di logout
+            logoutButton.addEventListener('click', function() {
+                sessionStorage.removeItem('authenticated'); // Pulisce la sessione
+                sessionStorage.removeItem('token'); // Rimuove anche il token
+                window.location.href = 'login.html';
+            });
+            
+            // Verifica della sessione e caricamento dati
+            function initializeDashboard() {
+                // Verifica l'autenticazione
+                if (!sessionStorage.getItem('authenticated')) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+                
+                // Carica i dati
+                loadData();
+            }
+            
+            // Inizializza la dashboard
+            initializeDashboard();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pizzeria da Mario - Login</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --red: #ce2b37;       /* Rosso bandiera italiana */
+            --green: #009246;     /* Verde bandiera italiana */
+            --white: #ffffff;     /* Bianco */
+            --light-grey: #f8f8f8;
+            --dark-grey: #333333;
+            --border-radius: 12px;
+            --transition: 0.3s ease;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Oxygen, Ubuntu, sans-serif;
+        }
+        
+        body {
+            background-color: var(--light-grey);
+            color: var(--dark-grey);
+            line-height: 1.5;
+            height: 100vh;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background-color: var(--white);
+            border-bottom: 3px solid var(--red);
+            margin-bottom: 20px;
+            border-radius: var(--border-radius) var(--border-radius) 0 0;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background-color: var(--red);
+            color: var(--white);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .logo-icon i {
+            font-size: 20px;
+        }
+        
+        .logo h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--dark-grey);
+        }
+        
+        .login-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--white);
+            border-radius: var(--border-radius);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .welcome-message {
+            margin-bottom: 30px;
+        }
+        
+        .welcome-message h2 {
+            color: var(--dark-grey);
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .welcome-message p {
+            color: #666;
+            font-size: 16px;
+        }
+        
+        .button-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        .user-button {
+            padding: 15px 20px;
+            border-radius: var(--border-radius);
+            background-color: var(--white);
+            border: 2px solid var(--light-grey);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .customer-button {
+            background-color: var(--green);
+            color: var(--white);
+            border-color: var(--green);
+        }
+        
+        .customer-button:hover {
+            background-color: #007e3a;
+            transform: translateY(-2px);
+        }
+        
+        .business-button {
+            background-color: var(--red);
+            color: var(--white);
+            border-color: var(--red);
+        }
+        
+        .business-button:hover {
+            background-color: #a82128;
+            transform: translateY(-2px);
+        }
+        
+        .login-form {
+            display: none;
+            max-width: 400px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: var(--light-grey);
+            border-radius: var(--border-radius);
+            text-align: left;
+        }
+        
+        .login-form h3 {
+            margin-bottom: 20px;
+            color: var(--dark-grey);
+            text-align: center;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: var(--dark-grey);
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #eee;
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            transition: border-color var(--transition);
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--green);
+        }
+        
+        .login-submit {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--red);
+            color: var(--white);
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color var(--transition);
+            margin-top: 10px;
+        }
+        
+        .login-submit:hover {
+            background-color: #a82128;
+        }
+        
+        .login-error {
+            color: var(--red);
+            font-size: 14px;
+            margin-top: 10px;
+            text-align: center;
+            display: none;
+        }
+        
+        .back-button {
+            margin-top: 15px;
+            color: #666;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: underline;
+        }
+        
+        .back-button:hover {
+            color: var(--dark-grey);
+        }
+        
+        /* Decorative elements */
+        .italian-stripe {
+            height: 3px;
+            width: 100%;
+            display: flex;
+            margin-top: -3px;
+        }
+
+        .italian-stripe div {
+            flex: 1;
+            height: 100%;
+        }
+
+        .stripe-green {
+            background-color: var(--green);
+        }
+
+        .stripe-white {
+            background-color: var(--white);
+        }
+
+        .stripe-red {
+            background-color: var(--red);
+        }
+        
+        /* Responsive styles */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .login-container {
+                padding: 20px;
+            }
+            
+            .logo h1 {
+                font-size: 18px;
+            }
+            
+            .welcome-message h2 {
+                font-size: 22px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-pizza-slice"></i>
+                </div>
+                <h1>Pizzeria da Mario</h1>
+            </div>
+        </header>
+        <div class="italian-stripe">
+            <div class="stripe-green"></div>
+            <div class="stripe-white"></div>
+            <div class="stripe-red"></div>
+        </div>
+        
+        <div class="login-container">
+            <div class="welcome-message">
+                <h2>Benvenuto alla Pizzeria da Mario</h2>
+                <p>Seleziona un'opzione per continuare</p>
+            </div>
+            
+            <div class="button-container" id="button-container">
+                <button class="user-button customer-button" id="customer-button">
+                    <i class="fas fa-user"></i>
+                    Sono un cliente
+                </button>
+                <button class="user-button business-button" id="business-button">
+                    <i class="fas fa-briefcase"></i>
+                    Sono un'azienda
+                </button>
+            </div>
+            
+            <div class="login-form" id="login-form">
+                <h3>Accesso Aziendale</h3>
+                <div class="form-group">
+                    <label for="username">Nome utente</label>
+                    <input type="text" id="username" name="username" placeholder="Inserisci il nome utente">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="Inserisci la password">
+                </div>
+                <button class="login-submit" id="login-submit">Accedi</button>
+                <div class="login-error" id="login-error">Nome utente o password non validi</div>
+                <button class="back-button" id="back-button">Torna indietro</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const customerButton = document.getElementById('customer-button');
+            const businessButton = document.getElementById('business-button');
+            const buttonContainer = document.getElementById('button-container');
+            const loginForm = document.getElementById('login-form');
+            const loginSubmit = document.getElementById('login-submit');
+            const backButton = document.getElementById('back-button');
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
+            const loginError = document.getElementById('login-error');
+            
+            // Costante API
+            const API_URL = '/api/login';
+            
+            // Click sul pulsante "Sono un cliente"
+            customerButton.addEventListener('click', function() {
+                window.location.href = 'index.html';
+            });
+            
+            // Click sul pulsante "Sono un'azienda"
+            businessButton.addEventListener('click', function() {
+                buttonContainer.style.display = 'none';
+                loginForm.style.display = 'block';
+            });
+            
+            // Click sul pulsante "Torna indietro"
+            backButton.addEventListener('click', function() {
+                loginForm.style.display = 'none';
+                buttonContainer.style.display = 'flex';
+                loginError.style.display = 'none';
+                usernameInput.value = '';
+                passwordInput.value = '';
+            });
+            
+            // Gestione del login
+            loginSubmit.addEventListener('click', function() {
+                const username = usernameInput.value.trim();
+                const password = passwordInput.value.trim();
+                
+                // Controlla se siamo in ambiente locale
+                if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:') {
+                    // Per testing locale, usa le credenziali hardcoded
+                    if (username === "Ciao" && password === "12345678") {
+                        sessionStorage.setItem('authenticated', 'true');
+                        window.location.href = 'dashboard.html';
+                    } else {
+                        loginError.style.display = 'block';
+                    }
+                } else {
+                    // Per ambiente di produzione, usa il servizio API
+                    fetch(API_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ username, password })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Salva il token di autenticazione
+                            sessionStorage.setItem('authenticated', 'true');
+                            sessionStorage.setItem('token', data.token);
+                            window.location.href = 'dashboard.html';
+                        } else {
+                            // Mostra errore
+                            loginError.style.display = 'block';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Errore durante il login:', error);
+                        loginError.style.display = 'block';
+                        loginError.textContent = 'Errore di connessione al server';
+                    });
+                }
+            });
+            
+            // Login con tasto Invio
+            passwordInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    loginSubmit.click();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

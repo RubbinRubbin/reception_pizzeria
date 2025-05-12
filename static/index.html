@@ -3,586 +3,312 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pizzeria da Mario - Chatbot</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <title>Pizzeria da Mario</title>
+    <link rel="stylesheet" href="static/css/all.min.css">
     <style>
-        :root {
-            --red: #ce2b37;       /* Rosso bandiera italiana */
-            --green: #009246;     /* Verde bandiera italiana */
-            --white: #ffffff;     /* Bianco */
-            --light-grey: #f8f8f8;
-            --dark-grey: #333333;
-            --border-radius: 12px;
-            --transition: 0.3s ease;
-        }
-        
-        * {
+        body {
+            font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Oxygen, Ubuntu, sans-serif;
-        }
-        
-        body {
-            background-color: var(--light-grey);
-            color: var(--dark-grey);
-            line-height: 1.5;
-            height: 100vh;
+            background-color: #f5f5f5;
         }
         
         .container {
-            max-width: 900px;
+            max-width: 800px;
             margin: 0 auto;
             padding: 20px;
-            display: flex;
-            flex-direction: column;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             height: 100vh;
-        }
-        
-        header {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            background-color: var(--white);
-            border-bottom: 3px solid var(--red);
-            margin-bottom: 20px;
-            border-radius: var(--border-radius) var(--border-radius) 0 0;
-        }
-        
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        
-        .logo-icon {
-            width: 40px;
-            height: 40px;
-            background-color: var(--red);
-            color: var(--white);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .logo-icon i {
-            font-size: 20px;
-        }
-        
-        .logo h1 {
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--dark-grey);
-        }
-        
-        .chatbot-container {
-            flex: 1;
             display: flex;
             flex-direction: column;
-            background-color: var(--white);
-            border-radius: var(--border-radius);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-            overflow: hidden;
         }
         
-        .chat-area {
+        .header {
+            text-align: center;
+            padding: 10px 0;
+            border-bottom: 2px solid #e01e1e;
+        }
+        
+        .header h1 {
+            margin: 0;
+            color: #e01e1e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .header h1 svg {
+            margin-right: 10px;
+        }
+        
+        .chat-container {
             flex: 1;
-            padding: 20px;
             overflow-y: auto;
-            background-color: var(--white);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
         }
         
         .message {
-            margin-bottom: 16px;
+            margin-bottom: 15px;
             max-width: 80%;
-            animation: fadeIn 0.3s;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            padding: 10px 15px;
+            border-radius: 20px;
+            position: relative;
+            line-height: 1.5;
         }
         
         .user-message {
-            margin-left: auto;
-            background-color: var(--red);
-            color: var(--white);
-            border-radius: 18px 18px 0 18px;
-            padding: 12px 16px;
+            align-self: flex-end;
+            background-color: #e01e1e;
+            color: white;
+            border-radius: 20px 20px 0px 20px;
         }
         
         .bot-message {
-            background-color: var(--light-grey);
-            color: var(--dark-grey);
-            border-radius: 18px 18px 18px 0;
-            border-left: 3px solid var(--green);
-            padding: 12px 16px;
-        }
-        
-        .menu-section {
-            background-color: var(--white);
-            border-left: 3px solid var(--green);
-            padding: 12px;
-            margin: 10px 0;
-            border-radius: 0 8px 8px 0;
-        }
-        
-        .menu-section h3 {
-            color: var(--red);
-            margin-bottom: 8px;
-            font-weight: 600;
-            font-size: 16px;
-        }
-        
-        .menu-item {
-            margin-bottom: 8px;
-        }
-        
-        .menu-item-name {
-            font-weight: 600;
-        }
-        
-        .menu-item-price {
-            color: var(--green);
-            font-weight: 600;
-        }
-        
-        .menu-item-desc {
-            font-size: 0.9em;
-            color: #666;
-            margin-top: 2px;
+            align-self: flex-start;
+            background-color: #f1f1f1;
+            color: #333;
+            border-radius: 20px 20px 20px 0px;
+            border-left: 4px solid #4CAF50;
         }
         
         .input-area {
             display: flex;
-            padding: 15px;
-            background-color: var(--white);
-            border-top: 1px solid #eee;
+            padding: 20px;
+            border-top: 1px solid #e1e1e1;
         }
         
-        #message-input {
+        .input-area input {
             flex: 1;
-            padding: 12px 15px;
-            border: 2px solid #eee;
-            border-radius: 24px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 30px;
             outline: none;
             font-size: 16px;
-            transition: border-color var(--transition);
         }
         
-        #message-input:focus {
-            border-color: var(--green);
-        }
-        
-        .send-button {
-            background-color: var(--red);
+        .input-area button {
+            background-color: #e01e1e;
             color: white;
             border: none;
             border-radius: 50%;
-            width: 45px;
-            height: 45px;
+            width: 50px;
+            height: 50px;
             margin-left: 10px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: background-color var(--transition);
         }
         
-        .send-button:hover {
-            background-color: #a82128;
-            transform: scale(1.05);
+        .input-area button:hover {
+            background-color: #c01a1a;
         }
         
-        .quick-buttons {
+        .quick-replies {
             display: flex;
-            overflow-x: auto;
-            gap: 8px;
-            padding: 12px 15px;
-            background-color: var(--white);
-            border-top: 1px solid #eee;
-            scrollbar-width: none; /* Firefox */
-        }
-        
-        .quick-buttons::-webkit-scrollbar {
-            display: none; /* Safari and Chrome */
-        }
-        
-        .quick-button {
-            padding: 8px 15px;
-            background-color: var(--white);
-            border: 2px solid #eee;
-            border-radius: 18px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.2s;
-            white-space: nowrap;
-            flex-shrink: 0;
-        }
-        
-        .quick-button:hover {
-            background-color: var(--green);
-            color: var(--white);
-            border-color: var(--green);
-        }
-        
-        .typing-indicator {
-            display: none; /* Hidden by default */
-            align-self: flex-start;
-            background-color: var(--light-grey);
-            border-radius: 18px;
-            padding: 8px 16px;
+            flex-wrap: wrap;
             margin-bottom: 15px;
+            gap: 10px;
         }
         
-        .typing-animation {
-            display: flex;
-            gap: 4px;
+        .quick-reply {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            padding: 8px 15px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            color: #333;
+            font-size: 14px;
         }
         
-        .typing-dot {
-            width: 6px;
-            height: 6px;
-            background-color: var(--green);
-            border-radius: 50%;
-            animation: typing-animation 1s infinite;
+        .quick-reply:hover {
+            background-color: #e9e9e9;
         }
         
-        .typing-dot:nth-child(2) {
-            animation-delay: 0.2s;
+        p {
+            margin: 0;
         }
         
-        .typing-dot:nth-child(3) {
-            animation-delay: 0.4s;
+        strong {
+            color: #e01e1e;
         }
         
-        @keyframes typing-animation {
-            0%, 100% { opacity: 0.4; transform: translateY(0); }
-            50% { opacity: 1; transform: translateY(-4px); }
+        .markdown h2 {
+            color: #e01e1e;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 1.4em;
         }
         
-        /* Responsive styles */
-        @media (max-width: 768px) {
-            .container {
-                padding: 10px;
-            }
-            
-            .message {
-                max-width: 90%;
-            }
-            
-            .logo h1 {
-                font-size: 18px;
-            }
+        .markdown p {
+            margin-bottom: 10px;
         }
         
-        /* Custom scrollbar */
-        .chat-area::-webkit-scrollbar {
-            width: 4px;
-        }
-        
-        .chat-area::-webkit-scrollbar-track {
-            background: var(--white);
-        }
-        
-        .chat-area::-webkit-scrollbar-thumb {
-            background: #ddd;
-            border-radius: 10px;
-        }
-        
-        .chat-area::-webkit-scrollbar-thumb:hover {
-            background: #ccc;
-        }
-
-        /* Decorative elements */
-        .italian-stripe {
-            height: 3px;
-            width: 100%;
-            display: flex;
-            margin-top: -3px;
-        }
-
-        .italian-stripe div {
-            flex: 1;
-            height: 100%;
-        }
-
-        .stripe-green {
-            background-color: var(--green);
-        }
-
-        .stripe-white {
-            background-color: var(--white);
-        }
-
-        .stripe-red {
-            background-color: var(--red);
+        .markdown hr {
+            border: none;
+            border-top: 1px dashed #ddd;
+            margin: 15px 0;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <header>
-            <div class="logo">
-                <div class="logo-icon">
-                    <i class="fas fa-pizza-slice"></i>
-                </div>
-                <h1>Pizzeria da Mario</h1>
-            </div>
-        </header>
-        <div class="italian-stripe">
-            <div class="stripe-green"></div>
-            <div class="stripe-white"></div>
-            <div class="stripe-red"></div>
+        <div class="header">
+            <h1>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pizza"><path d="M15 11h.01"></path><path d="M11 15h.01"></path><path d="M16 16h.01"></path><path d="m2 16 20 6-6-20A20 20 0 0 0 2 16"></path><path d="M5.71 17.11a17.04 17.04 0 0 1 11.4-11.4"></path></svg>
+                Pizzeria da Mario
+            </h1>
         </div>
         
-        <div class="chatbot-container">
-            <div class="chat-area" id="chat-area">
-                <!-- Messages will be added here dynamically -->
-                
-                <!-- Typing indicator -->
-                <div class="typing-indicator" id="typing-indicator">
-                    <div class="typing-animation">
-                        <div class="typing-dot"></div>
-                        <div class="typing-dot"></div>
-                        <div class="typing-dot"></div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="quick-buttons">
-                <button class="quick-button" data-message="Mostra menu">Mostra menu</button>
-                <button class="quick-button" data-message="Quanto costa la margherita?">Prezzo Margherita</button>
-                <button class="quick-button" data-message="Quali sono le pizze più popolari?">Pizze popolari</button>
-                <button class="quick-button" data-message="Avete pizze vegetariane?">Pizze vegetariane</button>
-                <button class="quick-button" data-message="Fate consegne a domicilio?">Consegna a domicilio</button>
-            </div>
-            
-            <div class="input-area">
-                <input type="text" id="message-input" placeholder="Scrivi un messaggio...">
-                <button class="send-button" id="send-button">
-                    <i class="fas fa-paper-plane"></i>
-                </button>
-            </div>
+        <div id="chat-container" class="chat-container"></div>
+        
+        <div class="input-area">
+            <input id="message-input" type="text" placeholder="Scrivi un messaggio..." autofocus>
+            <button id="send-button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-send"><path d="m22 2-7 20-4-9-9-4Z"></path><path d="M22 2 11 13"></path></svg>
+            </button>
+        </div>
+        
+        <div id="quick-replies" class="quick-replies">
+            <div class="quick-reply" data-message="Mostra menu">Mostra menu</div>
+            <div class="quick-reply" data-message="Prezzo Margherita">Prezzo Margherita</div>
+            <div class="quick-reply" data-message="Pizze popolari">Pizze popolari</div>
+            <div class="quick-reply" data-message="Pizze vegetariane">Pizze vegetariane</div>
+            <div class="quick-reply" data-message="Consegna a domicilio">Consegna a domicilio</div>
         </div>
     </div>
     
     <script>
+        // Genera un ID utente all'inizio della sessione
+        if (!sessionStorage.getItem('user_id')) {
+            sessionStorage.setItem('user_id', 'user_' + Math.random().toString(36).substring(2, 15));
+        }
+        
         document.addEventListener('DOMContentLoaded', function() {
-            const chatArea = document.getElementById('chat-area');
+            const chatContainer = document.getElementById('chat-container');
             const messageInput = document.getElementById('message-input');
             const sendButton = document.getElementById('send-button');
-            const typingIndicator = document.getElementById('typing-indicator');
-            const quickButtons = document.querySelectorAll('.quick-button');
+            const quickReplies = document.querySelectorAll('.quick-reply');
             
-            // API endpoint
-            const API_ENDPOINT = '/api/chat'; // Sostituire con l'URL effettivo del backend
-            
-            // Funzione per inviare messaggi al backend
-            async function sendMessage(message) {
-                // Mostra il messaggio dell'utente
-                addMessage(message, 'user');
+            // Funzione per aggiungere messaggi alla chat
+            function addMessage(message, isUser) {
+                const messageElement = document.createElement('div');
+                messageElement.classList.add('message');
+                messageElement.classList.add(isUser ? 'user-message' : 'bot-message');
                 
-                // Pulisci l'input
+                if (!isUser) {
+                    // Per i messaggi del bot, usa Markdown per formattare il testo
+                    messageElement.classList.add('markdown');
+                    
+                    // Sostituisci i pattern markdown
+                    let formattedText = message;
+                    
+                    // Converti titoli ## 
+                    formattedText = formattedText.replace(/## (.*?)$/gm, '<h2>$1</h2>');
+                    
+                    // Converti **testo** in grassetto
+                    formattedText = formattedText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                    
+                    // Converti --- in linee orizzontali
+                    formattedText = formattedText.replace(/^---$/gm, '<hr>');
+                    
+                    // Converti le nuove linee in tag <p>
+                    formattedText = formattedText.split('\n').map(line => {
+                        // Se la linea è già un tag HTML o vuota, lasciala così com'è
+                        if (line.trim() === '' || line.trim().startsWith('<')) {
+                            return line;
+                        }
+                        // Altrimenti, avvolgila in un tag <p>
+                        return `<p>${line}</p>`;
+                    }).join('');
+                    
+                    messageElement.innerHTML = formattedText;
+                } else {
+                    messageElement.textContent = message;
+                }
+                
+                chatContainer.appendChild(messageElement);
+                
+                // Scorri in fondo
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
+            
+            // Funzione per inviare un messaggio al chatbot
+            function sendMessage(message) {
+                if (message.trim() === '') return;
+                
+                // Aggiungi il messaggio dell'utente alla chat
+                addMessage(message, true);
+                
+                // Pulisci il campo di input
                 messageInput.value = '';
                 
-                // Mostra l'indicatore di digitazione
-                showTypingIndicator();
-                
-                try {
-                    // Invia la richiesta al backend
-                    const response = await fetch(API_ENDPOINT, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ message })
-                    });
-                    
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    
-                    const data = await response.json();
-                    
-                    // Nascondi l'indicatore di digitazione
-                    hideTypingIndicator();
-                    
-                    // Mostra la risposta del bot
-                    addMessage(data.response, 'bot');
-                    
-                } catch (error) {
+                // Chiama l'API del chatbot
+                fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        user_id: sessionStorage.getItem('user_id')
+                    }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Aggiungi la risposta del bot alla chat
+                    addMessage(data.response, false);
+                })
+                .catch(error => {
                     console.error('Error:', error);
-                    hideTypingIndicator();
-                    
-                    // Mostra un messaggio di errore
-                    addMessage('Mi dispiace, si è verificato un errore di comunicazione. Riprova più tardi.', 'bot');
-                }
-            }
-            
-            // Funzione per aggiungere un messaggio alla chat
-            function addMessage(content, sender) {
-                const messageDiv = document.createElement('div');
-                messageDiv.className = sender === 'user' ? 'message user-message' : 'message bot-message';
-                
-                // Gestisci la formattazione del menu
-                if (sender === 'bot' && content.includes('##')) {
-                    // Fomattazione speciale per il menu
-                    const formattedContent = formatMenuContent(content);
-                    messageDiv.innerHTML = formattedContent;
-                } else {
-                    // Formattazione normale per testo semplice
-                    messageDiv.textContent = content;
-                }
-                
-                // Inserisci il messaggio prima dell'indicatore di digitazione
-                chatArea.insertBefore(messageDiv, typingIndicator);
-                
-                // Scroll automatico al messaggio più recente
-                scrollToBottom();
-            }
-            
-            // Funzione per formattare il contenuto del menu
-            function formatMenuContent(content) {
-                // Dividi per sezioni
-                const sections = content.split('---');
-                let formattedContent = '';
-                
-                for (let section of sections) {
-                    if (!section.trim()) continue;
-                    
-                    // Cerca il titolo della sezione
-                    const sectionMatch = section.match(/##\s*(.*?)(?:\n|$)/);
-                    if (sectionMatch) {
-                        const sectionTitle = sectionMatch[1].trim();
-                        const sectionContent = section.replace(/##\s*(.*?)(?:\n|$)/, '').trim();
-                        
-                        formattedContent += `<div class="menu-section">
-                                              <h3>${sectionTitle}</h3>`;
-                        
-                        // Processa gli elementi del menu
-                        const menuItems = sectionContent.split('\n\n');
-                        for (let item of menuItems) {
-                            if (!item.trim()) continue;
-                            
-                            // Cerca nome e prezzo
-                            const itemMatch = item.match(/\*\*(.*?)\*\*\s*-\s*€\s*([\d.,]+)/);
-                            if (itemMatch) {
-                                const itemName = itemMatch[1].trim();
-                                const itemPrice = itemMatch[2].trim();
-                                let itemDesc = item.replace(/\*\*(.*?)\*\*\s*-\s*€\s*([\d.,]+)/, '').trim();
-                                
-                                formattedContent += `<div class="menu-item">
-                                                     <span class="menu-item-name">${itemName}</span> - 
-                                                     <span class="menu-item-price">€${itemPrice}</span>`;
-                                
-                                if (itemDesc) {
-                                    formattedContent += `<div class="menu-item-desc">${itemDesc}</div>`;
-                                }
-                                
-                                formattedContent += `</div>`;
-                            }
-                        }
-                        
-                        formattedContent += `</div>`;
-                    }
-                }
-                
-                // Se non abbiamo trovato un formato di menu, restituisci il testo originale
-                return formattedContent || content.replace(/\n/g, '<br>');
-            }
-            
-            // Funzioni per l'indicatore di digitazione
-            function showTypingIndicator() {
-                typingIndicator.style.display = 'flex';
-                scrollToBottom();
-            }
-            
-            function hideTypingIndicator() {
-                typingIndicator.style.display = 'none';
-            }
-            
-            // Funzione per scorrere automaticamente verso il basso
-            function scrollToBottom() {
-                chatArea.scrollTop = chatArea.scrollHeight;
+                    addMessage('Mi dispiace, si è verificato un errore di comunicazione. Riprova tra poco.', false);
+                });
             }
             
             // Event listener per il pulsante di invio
-            sendButton.addEventListener('click', function() {
-                const message = messageInput.value.trim();
-                if (message) {
-                    sendMessage(message);
-                }
+            sendButton.addEventListener('click', () => {
+                sendMessage(messageInput.value);
             });
             
-            // Event listener per l'input (invia con Enter)
-            messageInput.addEventListener('keypress', function(e) {
+            // Event listener per la pressione del tasto Enter
+            messageInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
-                    const message = messageInput.value.trim();
-                    if (message) {
-                        sendMessage(message);
-                    }
+                    sendMessage(messageInput.value);
                 }
             });
             
-            // Event listener per i pulsanti rapidi
-            quickButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    const message = this.getAttribute('data-message');
-                    if (message) {
-                        messageInput.value = message;
-                        sendMessage(message);
-                    }
+            // Event listener per le quick reply
+            quickReplies.forEach(reply => {
+                reply.addEventListener('click', () => {
+                    const message = reply.getAttribute('data-message');
+                    sendMessage(message);
                 });
             });
             
-            // Funzione per mostrare il messaggio di benvenuto
-            function showWelcomeMessage() {
-                // Nascondi prima l'indicatore di digitazione (mostralo solo quando necessario)
-                hideTypingIndicator();
-                
-                // Aggiungi il messaggio di benvenuto dopo un breve ritardo
-                setTimeout(() => {
-                    addMessage("Buonasera, benvenuto alla pizzeria da Mario! Come posso aiutarla oggi?", 'bot');
-                }, 500);
-            }
-            
-            // Mostra il messaggio di benvenuto all'avvio
-            showWelcomeMessage();
-            
-            // Scopo didattico: logica di testing locale
-            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                // Override della funzione sendMessage per test locale
-                window.sendMessage = async function(message) {
-                    addMessage(message, 'user');
-                    messageInput.value = '';
-                    showTypingIndicator();
-                    
-                    // Simula un ritardo di risposta
-                    setTimeout(() => {
-                        hideTypingIndicator();
-                        
-                        // Risposte di test basate sul messaggio
-                        let response;
-                        
-                        if (message.toLowerCase().includes('menu')) {
-                            response = "## PIZZE CLASSICHE\n\n**Margherita** - €6.50\nPomodoro, mozzarella, basilico\n\n**Marinara** - €5.50\nPomodoro, aglio, origano\n\n**Napoli** - €7.50\nPomodoro, mozzarella, acciughe, origano\n\n---\n\n## PIZZE SPECIALI\n\n**Quattro Stagioni** - €9.00\nPomodoro, mozzarella, prosciutto, funghi, carciofi, olive\n\n**Diavola** - €8.50\nPomodoro, mozzarella, salame piccante";
-                        } else if (message.toLowerCase().includes('margherita') && message.toLowerCase().includes('prezzo')) {
-                            response = "La Margherita costa €6.50";
-                        } else if (message.toLowerCase().includes('consegn')) {
-                            response = "Sì, effettuiamo consegne a domicilio tutti i giorni dalle 18:30 alle 22:30. È possibile ordinare chiamando il nostro numero o utilizzando l'app.";
-                        } else if (message.toLowerCase().includes('vegetarian')) {
-                            response = "Abbiamo diverse opzioni vegetariane nel nostro menu, tra cui la Margherita, la Quattro Formaggi, e la Ortolana con verdure di stagione.";
-                        } else {
-                            response = "Grazie per il suo messaggio. Come posso aiutarla con la nostra pizzeria?";
-                        }
-                        
-                        addMessage(response, 'bot');
-                    }, 1500);
-                }
-            }
+            // Invia un messaggio vuoto per ottenere il messaggio di benvenuto
+            fetch('/api/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    message: '',
+                    user_id: sessionStorage.getItem('user_id')
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Aggiungi la risposta del bot alla chat
+                addMessage(data.response, false);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                addMessage('Mi dispiace, si è verificato un errore di comunicazione. Riprova tra poco.', false);
+            });
         });
     </script>
 </body>

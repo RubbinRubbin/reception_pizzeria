@@ -1,5 +1,3 @@
-import os
-import json
 import re
 from datetime import datetime, timedelta
 from collections import Counter
@@ -12,6 +10,20 @@ class GestoreOrdine:
     Classe per gestire la raccolta e l'elaborazione dei dati degli ordini
     """
     
+    # Contatore statico per gli ID delle comande
+    _contatore_id_comanda = 0
+    
+    @classmethod
+    def _genera_id_comanda(cls):
+        """
+        Genera un nuovo ID comanda incrementando il contatore statico
+        
+        Returns:
+            Stringa con l'ID numerico nel formato "000001"
+        """
+        cls._contatore_id_comanda += 1
+        return f"{cls._contatore_id_comanda:06d}"
+    
     def __init__(self, menu_index):
         """
         Inizializza un nuovo gestore ordini
@@ -21,81 +33,18 @@ class GestoreOrdine:
         """
         self.menu_index = menu_index
         self.ordini_attivi = {}  # user_id -> ordine
-        self.comande_path = "C:\\Users\\rubbi\\Desktop\\LAVORO\\AI\\reception_pizzeria\\comande"
         self.orari_prenotati = {}  # slot_orario -> conteggio prenotazioni
         
-        # Crea la directory delle comande se non esiste
-        if not os.path.exists(self.comande_path):
-            os.makedirs(self.comande_path)
-            
-        # Crea la sottodirectory per i file JSON
-        self.json_comande_path = os.path.join(self.comande_path, "json_comande")
-        if not os.path.exists(self.json_comande_path):
-            os.makedirs(self.json_comande_path)
-            
-        # Carica gli orari già prenotati
-        self._carica_orari_prenotati()
+        # Inizializzazione degli orari prenotati
+        # In una versione più completa, potrebbe recuperare questi dati da Supabase
+        self._inizializza_orari_prenotati()
     
-    def _ottieni_prossimo_id_comanda(self):
+    def _inizializza_orari_prenotati(self):
         """
-        Ottiene il prossimo ID progressivo per la comanda
-        
-        Returns:
-            Stringa con l'ID numerico nel formato "000001"
+        Inizializza il dizionario degli orari prenotati
+        In una implementazione completa, potrebbe recuperare questi dati da Supabase
         """
-        # Percorso del file che contiene l'ultimo ID utilizzato
-        id_file_path = os.path.join(self.comande_path, "ultimo_id_comanda.txt")
-        
-        # Se il file esiste, leggi l'ultimo ID e incrementalo
-        if os.path.exists(id_file_path):
-            try:
-                with open(id_file_path, 'r') as f:
-                    ultimo_id = int(f.read().strip())
-                    nuovo_id = ultimo_id + 1
-            except:
-                # In caso di errore nella lettura, inizializza da 1
-                nuovo_id = 1
-        else:
-            # Se il file non esiste, inizializza da 1
-            nuovo_id = 1
-        
-        # Salva il nuovo ID nel file
-        with open(id_file_path, 'w') as f:
-            f.write(str(nuovo_id))
-        
-        # Restituisci l'ID formattato come "000001"
-        return f"{nuovo_id:06d}"
-    
-    def _carica_orari_prenotati(self):
-        """
-        Carica gli orari già prenotati dalle comande esistenti
-        """
-        try:
-            # Verifica se la directory delle comande JSON esiste
-            if not os.path.exists(self.json_comande_path):
-                return
-            
-            # Controlla tutti i file di comanda
-            for filename in os.listdir(self.json_comande_path):
-                if filename.endswith('.json'):
-                    file_path = os.path.join(self.json_comande_path, filename)
-                    
-                    with open(file_path, 'r', encoding='utf-8') as f:
-                        try:
-                            comanda = json.load(f)
-                            
-                            # Se la comanda ha un orario di consegna, incrementa il contatore
-                            if 'orario_consegna' in comanda:
-                                orario = comanda['orario_consegna']
-                                
-                                if orario in self.orari_prenotati:
-                                    self.orari_prenotati[orario] += 1
-                                else:
-                                    self.orari_prenotati[orario] = 1
-                        except:
-                            continue
-        except Exception as e:
-            print(f"Errore nel caricamento degli orari prenotati: {str(e)}")
+        self.orari_prenotati = {}
     
     def _genera_orari_disponibili(self):
         """
@@ -189,7 +138,6 @@ class GestoreOrdine:
         
         return menu_text
     
-    # Nuovo metodo per calcolare il prezzo totale dell'ordine
     def _calcola_totale_ordine(self, ordine):
         """
         Calcola il prezzo totale dell'ordine
@@ -231,7 +179,6 @@ class GestoreOrdine:
         
         return totale
     
-    # Nuovo metodo per aggiungere i prezzi ai prodotti nell'ordine
     def _aggiungi_prezzi_prodotti(self, ordine):
         """
         Aggiunge i prezzi ai singoli prodotti nell'ordine
@@ -265,6 +212,22 @@ class GestoreOrdine:
                 if nome_bevanda in items:
                     bevanda["prezzo"] = items[nome_bevanda]["price"]
                     break
+    
+    def _aggiorna_stato_ordine(self, user_id: str) -> None:
+        """
+        Funzione stub per mantenere traccia delle modifiche all'ordine.
+        Non salva fisicamente nulla, solo per log e debug.
+        
+        Args:
+            user_id: ID utente
+        """
+        # Genera un ID per la comanda se non ne ha già uno
+        ordine = self.ordini_attivi[user_id]
+        if not ordine["comanda_id"]:
+            ordine["comanda_id"] = self._genera_id_comanda()
+            
+        # Solo per debug
+        print(f"Ordine {ordine['comanda_id']} aggiornato - Stato: {ordine['stato']}")
     
     def inizia_nuovo_ordine(self, user_id: str) -> str:
         """
@@ -496,8 +459,8 @@ class GestoreOrdine:
                 # Genera il menu dei fritti
                 menu_fritti = self._genera_menu_fritti()
                 
-                # Salva la comanda parziale
-                self._salva_comanda(user_id)
+                # Aggiorna stato ordine
+                self._aggiorna_stato_ordine(user_id)
                 
                 # Chiedi dei fritti
                 return f"Perfetto! Ho registrato: {', '.join([f'{q} {p}' for p, q in pizze])}. Vuole anche dei fritti?\n\n{menu_fritti}"
@@ -517,8 +480,8 @@ class GestoreOrdine:
                 # Genera il menu delle bevande
                 menu_bevande = self._genera_menu_bevande()
                 
-                # Salva la comanda parziale
-                self._salva_comanda(user_id)
+                # Aggiorna stato ordine
+                self._aggiorna_stato_ordine(user_id)
                 
                 # Chiedi delle bevande
                 return f"Vuole anche delle bibite?\n\n{menu_bevande}"
@@ -540,8 +503,8 @@ class GestoreOrdine:
                 # Genera il menu delle bevande
                 menu_bevande = self._genera_menu_bevande()
                 
-                # Salva la comanda parziale
-                self._salva_comanda(user_id)
+                # Aggiorna stato ordine
+                self._aggiorna_stato_ordine(user_id)
                 
                 # Chiedi delle bevande
                 fritti_str = ", ".join([f"{q} {f}" for f, q in fritti])
@@ -559,8 +522,8 @@ class GestoreOrdine:
                 # Passa alla conferma dell'ordine
                 ordine["stato"] = "conferma_ordine"
                 
-                # Salva la comanda parziale
-                self._salva_comanda(user_id)
+                # Aggiorna stato ordine
+                self._aggiorna_stato_ordine(user_id)
                 
                 # Prepara il riepilogo dell'ordine
                 riepilogo = self._genera_riepilogo_ordine(ordine)
@@ -582,8 +545,8 @@ class GestoreOrdine:
                 # Passa alla conferma dell'ordine
                 ordine["stato"] = "conferma_ordine"
                 
-                # Salva la comanda parziale
-                self._salva_comanda(user_id)
+                # Aggiorna stato ordine
+                self._aggiorna_stato_ordine(user_id)
                 
                 # Prepara il riepilogo dell'ordine
                 riepilogo = self._genera_riepilogo_ordine(ordine)
@@ -604,8 +567,8 @@ class GestoreOrdine:
                 # Passa alla raccolta delle informazioni del cliente
                 ordine["stato"] = "raccolta_nome"
                 
-                # Salva la comanda parziale
-                self._salva_comanda(user_id)
+                # Aggiorna stato ordine
+                self._aggiorna_stato_ordine(user_id)
                 
                 # Chiedi nome, indirizzo, telefono e metodo di pagamento
                 return "Per gestire l'ordine correttamente ho bisogno di: nome, indirizzo di consegna, numero di telefono, metodo di pagamento. Iniziamo con il nome, come si chiama?"
@@ -623,8 +586,8 @@ class GestoreOrdine:
                 # Genera il menu delle pizze
                 menu_pizze = self._genera_menu_pizze()
                 
-                # Salva la comanda parziale
-                self._salva_comanda(user_id)
+                # Aggiorna stato ordine
+                self._aggiorna_stato_ordine(user_id)
                 
                 # Richiedi nuovamente l'ordine
                 return f"Mi scusi per l'errore. Ricominciamo. Che pizza desidera ordinare?\n\n{menu_pizze}"
@@ -640,8 +603,8 @@ class GestoreOrdine:
             # Passa alla raccolta dell'indirizzo
             ordine["stato"] = "raccolta_indirizzo"
             
-            # Salva la comanda parziale
-            self._salva_comanda(user_id)
+            # Aggiorna stato ordine
+            self._aggiorna_stato_ordine(user_id)
             
             # Chiedi l'indirizzo
             return "Grazie. Qual è l'indirizzo di consegna?"
@@ -653,8 +616,8 @@ class GestoreOrdine:
             # Passa alla raccolta del telefono
             ordine["stato"] = "raccolta_telefono"
             
-            # Salva la comanda parziale
-            self._salva_comanda(user_id)
+            # Aggiorna stato ordine
+            self._aggiorna_stato_ordine(user_id)
             
             # Chiedi il telefono
             return "Mi può lasciare un numero di telefono per eventuali comunicazioni sulla consegna?"
@@ -668,8 +631,8 @@ class GestoreOrdine:
                 # Passa alla raccolta del metodo di pagamento
                 ordine["stato"] = "raccolta_pagamento"
                 
-                # Salva la comanda parziale
-                self._salva_comanda(user_id)
+                # Aggiorna stato ordine
+                self._aggiorna_stato_ordine(user_id)
                 
                 # Chiedi il metodo di pagamento
                 return "Come preferisce pagare? Accettiamo contanti e carta alla consegna."
@@ -692,8 +655,8 @@ class GestoreOrdine:
             # Passa alla raccolta dell'orario di consegna
             ordine["stato"] = "raccolta_orario"
             
-            # Salva la comanda parziale
-            self._salva_comanda(user_id)
+            # Aggiorna stato ordine
+            self._aggiorna_stato_ordine(user_id)
             
             # Genera la lista degli orari disponibili
             orari_disponibili = self._genera_orari_disponibili()
@@ -734,10 +697,10 @@ class GestoreOrdine:
                     
                     # Genera un ID univoco per la comanda se non ne ha già uno
                     if not ordine["comanda_id"]:
-                        ordine["comanda_id"] = self._ottieni_prossimo_id_comanda()
+                        ordine["comanda_id"] = self._genera_id_comanda()
                     
-                    # Salva la comanda parziale
-                    self._salva_comanda(user_id)
+                    # Aggiorna stato ordine
+                    self._aggiorna_stato_ordine(user_id)
                     
                     # Prepara il riepilogo completo
                     riepilogo = self._genera_riepilogo_completo(ordine)
@@ -765,10 +728,8 @@ class GestoreOrdine:
                 # Aggiungi prezzi ai singoli prodotti per la generazione della comanda
                 self._aggiungi_prezzi_prodotti(ordine_completato)
                 
-                # Finalizza l'ordine
-                self._salva_comanda(user_id)
-                
-                # Chiama le funzioni di profilo.py
+                # Ora i dati saranno salvati su Supabase tramite le funzioni di profilo.py
+                # Nessun salvataggio locale qui
                 crea_comanda_txt(user_id, ordine_completato)
                 aggiorna_profilo_cliente(user_id, ordine_completato["cliente"])
                 aggiorna_file_clienti(ordine_completato["cliente"])
@@ -800,8 +761,8 @@ class GestoreOrdine:
                 # Genera il menu delle pizze
                 menu_pizze = self._genera_menu_pizze()
                 
-                # Salva la comanda parziale
-                self._salva_comanda(user_id)
+                # Aggiorna stato ordine
+                self._aggiorna_stato_ordine(user_id)
                 
                 # Richiedi nuovamente l'ordine
                 return f"Mi scusi per l'errore. Ricominciamo da capo. Che pizza desidera ordinare?\n\n{menu_pizze}"
@@ -886,47 +847,6 @@ class GestoreOrdine:
         riepilogo += f"Metodo di pagamento: {pagamento}"
         
         return riepilogo
-    
-    def _salva_comanda(self, user_id: str) -> str:
-        """
-        Salva la comanda su file
-        
-        Args:
-            user_id: ID utente
-            
-        Returns:
-            Percorso del file comanda
-        """
-        ordine = self.ordini_attivi[user_id]
-        
-        # Genera un ID per la comanda se non ne ha già uno
-        if not ordine["comanda_id"]:
-            ordine["comanda_id"] = self._ottieni_prossimo_id_comanda()
-        
-        comanda_id = ordine["comanda_id"]
-        
-        # Crea un dizionario con tutte le informazioni
-        comanda = {
-            "id": comanda_id,
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "pizze": ordine["pizze"],
-            "fritti": ordine["fritti"],
-            "bevande": ordine["bevande"],
-            "cliente": ordine["cliente"],
-            "pagamento": ordine["pagamento"],
-            "orario_consegna": ordine["orario_consegna"],
-            "risposte_cliente": ordine["risposte_cliente"],
-            "stato": ordine["stato"],
-            "comanda_id": comanda_id  # Aggiungi l'ID numerico progressivo
-        }
-        
-        # Salva la comanda in formato JSON nella sottodirectory
-        comanda_path = os.path.join(self.json_comande_path, f"comanda_{comanda_id}.json")
-        with open(comanda_path, "w", encoding="utf-8") as f:
-            json.dump(comanda, f, ensure_ascii=False, indent=4)
-        
-        print(f"Comanda salvata in: {comanda_path}")
-        return comanda_path
 
 
 def e_intento_ordine(messaggio: str) -> bool:

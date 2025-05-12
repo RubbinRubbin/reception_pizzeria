@@ -1,79 +1,189 @@
 import os
-import re
-from datetime import datetime
-from typing import Dict, List
+import json
+from datetime import datetime, date, timedelta
+from typing import Dict, List, Optional
+from supabase import create_client
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+# Initialize Supabase client
+supabase_url = os.getenv("SUPABASE_URL")
+supabase_key = os.getenv("SUPABASE_KEY")
+supabase = create_client(supabase_url, supabase_key)
 
 def crea_comanda_txt(user_id: str, ordine: Dict) -> None:
     """
-    Aggiunge i dati dell'ordine al file comanda.txt esistente
+    Salva i dati dell'ordine nel database Supabase con formato ordinato per la stampa
     
     Args:
         user_id: ID utente
         ordine: Dizionario dell'ordine
     """
-    # Percorso del file comanda.txt esistente
-    comande_path = "C:\\Users\\rubbi\\Desktop\\LAVORO\\AI\\reception_pizzeria\\comande"
-    file_path = os.path.join(comande_path, "comanda.txt")
-    
-    # Assicurati che la directory esista
-    if not os.path.exists(comande_path):
-        os.makedirs(comande_path)
-    
-    # Usa l'ID comanda già generato in ordine.py
+    # Ottieni l'ID comanda
     comanda_id = ordine["comanda_id"]
     
-    # Conteggio prodotti per tipo
-    conteggio_pizze = _conta_prodotti(ordine["pizze"])
-    conteggio_fritti = _conta_prodotti(ordine["fritti"])
-    conteggio_bevande = _conta_prodotti(ordine["bevande"])
+    # Prepara i prodotti in formato JSONB per il database
+    pizze_json = _prepara_prodotti_json(ordine["pizze"])
+    fritti_json = _prepara_prodotti_json(ordine["fritti"])
+    bevande_json = _prepara_prodotti_json(ordine["bevande"])
     
-    # Costruisci il contenuto da aggiungere alla comanda
+    # Prepara i dati della comanda per il database
+    comanda_data = {
+        "comanda_id": comanda_id,
+        "user_id": user_id,
+        "data": datetime.now().strftime('%Y-%m-%d'),
+        "ora": datetime.now().strftime('%H:%M:%S'),
+        "orario_consegna": ordine['orario_consegna'],
+        "nome_cliente": ordine['cliente']['nome'],
+        "telefono_cliente": ordine['cliente']['telefono'],
+        "indirizzo_cliente": ordine['cliente']['indirizzo'],
+        "metodo_pagamento": ordine['pagamento'],
+        "totale": ordine['totale'],
+        "pizze": pizze_json,
+        "fritti": fritti_json,
+        "bevande": bevande_json
+    }
+    
+    # Salva la comanda nella tabella "comande"
+    response = supabase.table("comande").insert(comanda_data).execute()
+
+def _prepara_prodotti_json(prodotti: List[Dict]) -> List[Dict]:
+    """
+    Prepara i prodotti in formato JSON per il database
+    
+    Args:
+        prodotti: Lista di prodotti
+        
+    Returns:
+        Lista di dizionari con formato adatto per JSON
+    """
+    # Utilizza _conta_prodotti per raggruppare e contare
+    conteggio = _conta_prodotti(prodotti)
+    
+    # Converte in formato JSON per il database
+    risultato = []
+    for nome, (quantita, prezzo) in conteggio.items():
+        risultato.append({
+            "nome": nome,
+            "prezzo": prezzo,
+            "quantita": quantita
+        })
+    
+    # Ordina per nome prodotto per avere un formato consistente
+    return sorted(risultato, key=lambda x: x["nome"])
+
+def formatta_comanda_per_stampa(comanda_id: str) -> str:
+    """
+    Formatta una comanda per la stampa
+    
+    Args:
+        comanda_id: ID della comanda da formattare
+        
+    Returns:
+        String con la comanda formattata pronta per la stampa
+    """
+    # Recupera i dati della comanda
+    response = supabase.table("comande").select("*").eq("comanda_id", comanda_id).execute()
+    
+    if not response.data or len(response.data) == 0:
+        return "Comanda non trovata."
+    
+    comanda = response.data[0]
+    
+    # Costruisci il contenuto formattato
     contenuto = []
-    contenuto.append("\n" + "=" * 50)  # Separatore tra comande
-    contenuto.append(f"NUOVO ORDINE #{comanda_id}")
     contenuto.append("=" * 50)
-    contenuto.append(f"Data: {datetime.now().strftime('%d/%m/%Y')}")
-    contenuto.append(f"Ora: {datetime.now().strftime('%H:%M:%S')}")
-    contenuto.append(f"Orario consegna: {ordine['orario_consegna']}")
+    contenuto.append(f"ORDINE #{comanda['comanda_id']}")
+    contenuto.append("=" * 50)
+    contenuto.append(f"Data: {comanda['data']}")
+    contenuto.append(f"Ora: {comanda['ora']}")
+    contenuto.append(f"Orario consegna: {comanda['orario_consegna']}")
     contenuto.append("-" * 50)
     
     # Informazioni cliente
     contenuto.append("INFORMAZIONI CLIENTE:")
-    contenuto.append(f"Nome: {ordine['cliente']['nome']}")
-    contenuto.append(f"Telefono: {ordine['cliente']['telefono']}")
-    contenuto.append(f"Indirizzo: {ordine['cliente']['indirizzo']}")
-    contenuto.append(f"Metodo pagamento: {ordine['pagamento']}")
+    contenuto.append(f"Nome: {comanda['nome_cliente']}")
+    contenuto.append(f"Telefono: {comanda['telefono_cliente']}")
+    contenuto.append(f"Indirizzo: {comanda['indirizzo_cliente']}")
+    contenuto.append(f"Metodo pagamento: {comanda['metodo_pagamento']}")
     contenuto.append("-" * 50)
     
     # Prodotti ordinati
     contenuto.append("PRODOTTI ORDINATI:")
     
     # Pizze
-    if conteggio_pizze:
+    pizze = comanda.get("pizze", [])
+    if pizze:
         contenuto.append("\nPIZZE:")
-        for pizza, (quantita, prezzo) in conteggio_pizze.items():
-            contenuto.append(f"  {quantita}x {pizza:<20} {prezzo:.2f}€/cad = {quantita * prezzo:.2f}€")
+        for pizza in pizze:
+            prezzo = float(pizza["prezzo"]) if isinstance(pizza["prezzo"], str) else pizza["prezzo"]
+            quantita = int(pizza["quantita"])
+            contenuto.append(f"  {quantita}x {pizza['nome']:<20} {prezzo:.2f}€/cad = {quantita * prezzo:.2f}€")
     
     # Fritti
-    if conteggio_fritti:
+    fritti = comanda.get("fritti", [])
+    if fritti:
         contenuto.append("\nFRITTI:")
-        for fritto, (quantita, prezzo) in conteggio_fritti.items():
-            contenuto.append(f"  {quantita}x {fritto:<20} {prezzo:.2f}€/cad = {quantita * prezzo:.2f}€")
+        for fritto in fritti:
+            prezzo = float(fritto["prezzo"]) if isinstance(fritto["prezzo"], str) else fritto["prezzo"]
+            quantita = int(fritto["quantita"])
+            contenuto.append(f"  {quantita}x {fritto['nome']:<20} {prezzo:.2f}€/cad = {quantita * prezzo:.2f}€")
     
     # Bevande
-    if conteggio_bevande:
+    bevande = comanda.get("bevande", [])
+    if bevande:
         contenuto.append("\nBEVANDE:")
-        for bevanda, (quantita, prezzo) in conteggio_bevande.items():
-            contenuto.append(f"  {quantita}x {bevanda:<20} {prezzo:.2f}€/cad = {quantita * prezzo:.2f}€")
+        for bevanda in bevande:
+            prezzo = float(bevanda["prezzo"]) if isinstance(bevanda["prezzo"], str) else bevanda["prezzo"]
+            quantita = int(bevanda["quantita"])
+            contenuto.append(f"  {quantita}x {bevanda['nome']:<20} {prezzo:.2f}€/cad = {quantita * prezzo:.2f}€")
     
     contenuto.append("-" * 50)
-    contenuto.append(f"TOTALE: {ordine['totale']:.2f}€")
+    contenuto.append(f"TOTALE: {float(comanda['totale']):.2f}€")
     contenuto.append("=" * 50)
     
-    # Apri il file in modalità append (a+) per aggiungere i dati
-    # a+ crea il file se non esiste e lo apre in modalità append
-    with open(file_path, "a+", encoding="utf-8") as f:
-        f.write("\n".join(contenuto))
+    return "\n".join(contenuto)
+
+def aggiorna_profilo_cliente(user_id: str, info_cliente: Dict) -> None:
+    """
+    Aggiorna o crea il profilo del cliente nel database Supabase
+    
+    Args:
+        user_id: ID utente
+        info_cliente: Informazioni del cliente (nome, telefono, indirizzo)
+    """
+    # Prepara i dati del cliente
+    cliente_data = {
+        "user_id": user_id,
+        "nome": info_cliente['nome'],
+        "telefono": info_cliente['telefono'],
+        "indirizzo": info_cliente['indirizzo'],
+        "ultimo_aggiornamento": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    }
+    
+    # Verifica se il cliente esiste già (usando il telefono come chiave)
+    response = supabase.table("clienti").select("*").eq("telefono", info_cliente['telefono']).execute()
+    
+    if response.data and len(response.data) > 0:
+        # Cliente esistente, aggiorna i dati
+        cliente_id = response.data[0]['id']  # Assumiamo che 'id' sia la chiave primaria
+        supabase.table("clienti").update(cliente_data).eq("id", cliente_id).execute()
+    else:
+        # Nuovo cliente, inserisci i dati
+        supabase.table("clienti").insert(cliente_data).execute()
+
+def aggiorna_file_clienti(info_cliente: Dict) -> None:
+    """
+    Questa funzione non fa nulla - mantenuta solo per compatibilità con ordine.py
+    Tutti i dati del cliente vengono gestiti in aggiorna_profilo_cliente
+    
+    Args:
+        info_cliente: Informazioni del cliente (nome, telefono, indirizzo)
+    """
+    # Non fa nulla - i dati sono già salvati in Supabase
+    pass
 
 def _conta_prodotti(prodotti: List[Dict]) -> Dict[str, tuple]:
     """
@@ -97,135 +207,245 @@ def _conta_prodotti(prodotti: List[Dict]) -> Dict[str, tuple]:
     
     return conteggio
 
-def _sanitizza_nome_file(nome: str) -> str:
+def cerca_comande_cliente(telefono: str) -> List[Dict]:
     """
-    Sanitizza il nome del cliente per renderlo utilizzabile come nome file
+    Cerca tutte le comande di un cliente utilizzando il numero di telefono
     
     Args:
-        nome: Nome originale del cliente
+        telefono: Numero di telefono del cliente
         
     Returns:
-        Nome sanitizzato utilizzabile come nome di file
+        Lista delle comande del cliente
     """
-    # Rimuovi caratteri non validi nei nomi file
-    nome_sanitizzato = re.sub(r'[\\/*?:"<>|]', '', nome)
-    # Sostituisci spazi con underscore
-    nome_sanitizzato = nome_sanitizzato.replace(' ', '_')
-    # Limita la lunghezza massima
-    if len(nome_sanitizzato) > 50:
-        nome_sanitizzato = nome_sanitizzato[:50]
-    # Se il nome è vuoto dopo la sanitizzazione, usa un default
-    if not nome_sanitizzato:
-        nome_sanitizzato = "cliente_sconosciuto"
-    
-    return nome_sanitizzato
+    response = supabase.table("comande").select("*").eq("telefono_cliente", telefono).order("data", desc=True).execute()
+    return response.data
 
-def aggiorna_profilo_cliente(user_id: str, info_cliente: Dict) -> None:
+# ===== FUNZIONI PER LA DASHBOARD =====
+
+def ottieni_comande_dashboard(filtro: str = "tutte") -> List[Dict]:
     """
-    Aggiorna o crea il profilo del cliente nel database clienti
+    Ottiene le comande formattate per la dashboard
     
     Args:
-        user_id: ID utente
-        info_cliente: Informazioni del cliente (nome, telefono, indirizzo)
+        filtro: Filtro da applicare ('tutte', 'oggi', 'in_corso', 'completate', 'future')
+        
+    Returns:
+        Lista di comande formattate per la dashboard
     """
-    # Percorso del database clienti
-    db_path = "C:\\Users\\rubbi\\Desktop\\LAVORO\\AI\\reception_pizzeria\\clienti"
+    # Determina gli stati delle comande per il filtro e l'ordinamento
+    oggi = date.today().strftime('%Y-%m-%d')
+    ora = datetime.now().strftime('%H:%M:%S')
     
-    # Assicurati che la directory esista
-    if not os.path.exists(db_path):
-        os.makedirs(db_path)
+    # Query base per recuperare le comande
+    query = supabase.table("comande").select("*")
     
-    # Ottieni il nome sanitizzato per il file
-    nome_cliente = info_cliente['nome']
-    nome_file = _sanitizza_nome_file(nome_cliente)
+    # Applica i filtri
+    if filtro == "oggi":
+        query = query.eq("data", oggi)
+    elif filtro == "in_corso":
+        query = query.eq("data", oggi).lt("orario_consegna", (datetime.now() + timedelta(hours=2)).strftime('%H:%M:%S'))
+    elif filtro == "completate":
+        query = query.eq("data", oggi).lt("ora", ora)
+    elif filtro == "future":
+        query = query.gt("data", oggi)
     
-    # Crea o aggiorna il file del profilo cliente
-    profile_path = os.path.join(db_path, f"cliente_{nome_file}.txt")
+    # Ordina per data e ora
+    query = query.order("data", desc=True).order("ora", desc=True)
     
-    # Costruisci il contenuto del profilo
-    contenuto = []
-    contenuto.append(f"ID Cliente: {user_id}")
-    contenuto.append(f"Nome: {info_cliente['nome']}")
-    contenuto.append(f"Telefono: {info_cliente['telefono']}")
-    contenuto.append(f"Indirizzo: {info_cliente['indirizzo']}")
-    contenuto.append(f"Ultimo aggiornamento: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
+    # Esegui la query
+    response = query.execute()
     
-    # Scrivi il contenuto nel file
-    with open(profile_path, "w", encoding="utf-8") as f:
-        f.write("\n".join(contenuto))
+    if not response.data:
+        return []
+    
+    # Arricchisci i dati per la dashboard
+    comande_formattate = []
+    for comanda in response.data:
+        # Determina lo stato della comanda
+        data_comanda = comanda.get('data', '')
+        ora_comanda = comanda.get('ora', '')
+        orario_consegna = comanda.get('orario_consegna', '')
+        
+        if data_comanda == oggi and orario_consegna > ora:
+            stato = "in_corso"
+        elif data_comanda == oggi and orario_consegna <= ora:
+            stato = "completato"
+        elif data_comanda > oggi:
+            stato = "futuro"
+        else:
+            stato = "storico"
+        
+        # Aggiungi il campo stato
+        comanda['stato'] = stato
+        
+        # Calcola il totale delle pizze, fritti e bevande
+        comanda['num_pizze'] = len(comanda.get('pizze', []))
+        comanda['num_fritti'] = len(comanda.get('fritti', []))
+        comanda['num_bevande'] = len(comanda.get('bevande', []))
+        
+        # Aggiungi il totale dei prodotti
+        comanda['num_prodotti'] = comanda['num_pizze'] + comanda['num_fritti'] + comanda['num_bevande']
+        
+        # Aggiungi la comanda formattata alla lista
+        comande_formattate.append(comanda)
+    
+    return comande_formattate
 
-def aggiorna_file_clienti(info_cliente: Dict) -> None:
+def ottieni_dettaglio_comanda_dashboard(comanda_id: str) -> Dict:
     """
-    Aggiunge o aggiorna le informazioni del cliente nel file clienti.txt condiviso
+    Ottiene i dettagli formattati di una singola comanda per la dashboard
     
     Args:
-        info_cliente: Informazioni del cliente (nome, telefono, indirizzo)
+        comanda_id: ID della comanda
+        
+    Returns:
+        Dizionario con dettagli formattati della comanda
     """
-    # Percorso del file clienti.txt
-    file_path = "C:\\Users\\rubbi\\Desktop\\LAVORO\\AI\\reception_pizzeria\\clienti.txt"
+    response = supabase.table("comande").select("*").eq("comanda_id", comanda_id).execute()
     
-    # Raccogli i dati del cliente
-    nome = info_cliente['nome']
-    telefono = info_cliente['telefono']
-    indirizzo = info_cliente['indirizzo']
-    data_aggiornamento = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+    if not response.data or len(response.data) == 0:
+        return {"errore": "Comanda non trovata"}
     
-    # Verifica se il file esiste e contiene già il cliente
-    clienti_esistenti = {}
-    cliente_presente = False
-    index_cliente = 0
+    comanda = response.data[0]
     
-    if os.path.exists(file_path):
-        try:
-            with open(file_path, "r", encoding="utf-8") as f:
-                linee = f.readlines()
-                
-                # Parsa le informazioni esistenti
-                i = 0
-                while i < len(linee):
-                    if linee[i].startswith("Telefono: "):
-                        tel = linee[i].strip().replace("Telefono: ", "")
-                        clienti_esistenti[tel] = i - 1  # Indice della riga del nome
-                    i += 1
-            
-            # Controlla se il cliente è già presente
-            if telefono in clienti_esistenti:
-                cliente_presente = True
-                index_cliente = clienti_esistenti[telefono]
-        except Exception as e:
-            print(f"Errore nella lettura del file clienti.txt: {str(e)}")
-    
-    # Prepara i dati da scrivere
-    if cliente_presente:
-        # Aggiorna il cliente esistente
-        with open(file_path, "r", encoding="utf-8") as f:
-            linee = f.readlines()
+    # Formato HTML per la stampa
+    html_formattato = f"""
+    <div class="comanda-container">
+        <div class="comanda-header">
+            <h2>ORDINE #{comanda['comanda_id']}</h2>
+            <div class="comanda-info">
+                <p><strong>Data:</strong> {comanda['data']}</p>
+                <p><strong>Ora:</strong> {comanda['ora']}</p>
+                <p><strong>Consegna:</strong> {comanda['orario_consegna']}</p>
+            </div>
+        </div>
         
-        # Aggiorna le informazioni del cliente
-        linee[index_cliente] = f"Nome: {nome}\n"
-        linee[index_cliente + 1] = f"Telefono: {telefono}\n"
-        linee[index_cliente + 2] = f"Indirizzo: {indirizzo}\n"
-        linee[index_cliente + 3] = f"Ultimo aggiornamento: {data_aggiornamento}\n"
+        <div class="cliente-info">
+            <h3>INFORMAZIONI CLIENTE</h3>
+            <p><strong>Nome:</strong> {comanda['nome_cliente']}</p>
+            <p><strong>Telefono:</strong> {comanda['telefono_cliente']}</p>
+            <p><strong>Indirizzo:</strong> {comanda['indirizzo_cliente']}</p>
+            <p><strong>Metodo pagamento:</strong> {comanda['metodo_pagamento']}</p>
+        </div>
         
-        # Riscrivi il file
-        with open(file_path, "w", encoding="utf-8") as f:
-            f.writelines(linee)
-    else:
-        # Aggiungi un nuovo cliente
-        with open(file_path, "a+", encoding="utf-8") as f:
-            # Se il file è vuoto o non esiste, aggiungi un'intestazione
-            f.seek(0)
-            contenuto = f.read()
-            if not contenuto:
-                f.write("# ELENCO CLIENTI PIZZERIA\n")
-                f.write("# Formato: Nome, Telefono, Indirizzo, Data aggiornamento\n")
-                f.write("#" + "=" * 70 + "\n\n")
+        <div class="prodotti-ordinati">
+            <h3>PRODOTTI ORDINATI</h3>
+    """
+    
+    # Aggiungi le pizze
+    pizze = comanda.get("pizze", [])
+    if pizze:
+        html_formattato += "<div class='categoria-prodotti'><h4>PIZZE</h4><ul>"
+        for pizza in pizze:
+            prezzo = float(pizza["prezzo"]) if isinstance(pizza["prezzo"], str) else pizza["prezzo"]
+            quantita = int(pizza["quantita"])
+            html_formattato += f"<li>{quantita}x {pizza['nome']} - {prezzo:.2f}€/cad = {quantita * prezzo:.2f}€</li>"
+        html_formattato += "</ul></div>"
+    
+    # Aggiungi i fritti
+    fritti = comanda.get("fritti", [])
+    if fritti:
+        html_formattato += "<div class='categoria-prodotti'><h4>FRITTI</h4><ul>"
+        for fritto in fritti:
+            prezzo = float(fritto["prezzo"]) if isinstance(fritto["prezzo"], str) else fritto["prezzo"]
+            quantita = int(fritto["quantita"])
+            html_formattato += f"<li>{quantita}x {fritto['nome']} - {prezzo:.2f}€/cad = {quantita * prezzo:.2f}€</li>"
+        html_formattato += "</ul></div>"
+    
+    # Aggiungi le bevande
+    bevande = comanda.get("bevande", [])
+    if bevande:
+        html_formattato += "<div class='categoria-prodotti'><h4>BEVANDE</h4><ul>"
+        for bevanda in bevande:
+            prezzo = float(bevanda["prezzo"]) if isinstance(bevanda["prezzo"], str) else bevanda["prezzo"]
+            quantita = int(bevanda["quantita"])
+            html_formattato += f"<li>{quantita}x {bevanda['nome']} - {prezzo:.2f}€/cad = {quantita * prezzo:.2f}€</li>"
+        html_formattato += "</ul></div>"
+    
+    # Chiusura e totale
+    html_formattato += f"""
+        </div>
+        
+        <div class="comanda-footer">
+            <h3>TOTALE: {float(comanda['totale']):.2f}€</h3>
+        </div>
+    </div>
+    """
+    
+    # Aggiungi sia la versione HTML che i dati originali
+    return {
+        "dati": comanda,
+        "html": html_formattato,
+        "testo": formatta_comanda_per_stampa(comanda_id)
+    }
+
+def ottieni_statistiche_giornaliere() -> Dict:
+    """
+    Ottiene le statistiche giornaliere per la dashboard
+    
+    Returns:
+        Dizionario con statistiche giornaliere
+    """
+    oggi = date.today().strftime('%Y-%m-%d')
+    
+    # Statistiche comande di oggi
+    response_oggi = supabase.table("comande").select("*").eq("data", oggi).execute()
+    comande_oggi = response_oggi.data if response_oggi.data else []
+    
+    # Statistiche ultime 24 ore
+    ieri = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S')
+    response_24h = supabase.table("comande").select("*").gte("timestamp_creazione", ieri).execute()
+    comande_24h = response_24h.data if response_24h.data else []
+    
+    # Calcolo statistiche
+    totale_oggi = sum(float(c['totale']) for c in comande_oggi)
+    num_comande_oggi = len(comande_oggi)
+    
+    totale_24h = sum(float(c['totale']) for c in comande_24h)
+    num_comande_24h = len(comande_24h)
+    
+    # Calcolo prodotti più venduti oggi
+    prodotti_conteggio = {}
+    
+    for comanda in comande_oggi:
+        # Conta pizze
+        for pizza in comanda.get('pizze', []):
+            nome = pizza.get('nome', '')
+            quantita = int(pizza.get('quantita', 0))
+            if nome in prodotti_conteggio:
+                prodotti_conteggio[nome] += quantita
             else:
-                # Aggiungi un separatore se ci sono già clienti
-                f.write("\n" + "-" * 50 + "\n")
-            
-            # Aggiungi il nuovo cliente
-            f.write(f"Nome: {nome}\n")
-            f.write(f"Telefono: {telefono}\n")
-            f.write(f"Indirizzo: {indirizzo}\n")
-            f.write(f"Ultimo aggiornamento: {data_aggiornamento}\n")
+                prodotti_conteggio[nome] = quantita
+        
+        # Conta fritti
+        for fritto in comanda.get('fritti', []):
+            nome = fritto.get('nome', '')
+            quantita = int(fritto.get('quantita', 0))
+            if nome in prodotti_conteggio:
+                prodotti_conteggio[nome] += quantita
+            else:
+                prodotti_conteggio[nome] = quantita
+        
+        # Conta bevande
+        for bevanda in comanda.get('bevande', []):
+            nome = bevanda.get('nome', '')
+            quantita = int(bevanda.get('quantita', 0))
+            if nome in prodotti_conteggio:
+                prodotti_conteggio[nome] += quantita
+            else:
+                prodotti_conteggio[nome] = quantita
+    
+    # Ordina per quantità
+    prodotti_ordinati = sorted(
+        [{"nome": k, "quantita": v} for k, v in prodotti_conteggio.items()],
+        key=lambda x: x["quantita"],
+        reverse=True
+    )
+    
+    return {
+        "totale_oggi": totale_oggi,
+        "num_comande_oggi": num_comande_oggi,
+        "totale_24h": totale_24h,
+        "num_comande_24h": num_comande_24h,
+        "prodotti_piu_venduti": prodotti_ordinati[:5]  # Top 5 prodotti
+    }
