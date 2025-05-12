@@ -1,48 +1,71 @@
-# 🍕 PizzaBot AI - Assistente Intelligente per Pizzerie
-Un agente AI conversazionale che gestisce e cataloga gli ordini dei clienti per una pizzeria, offrendo un'esperienza di ordinazione naturale e intuitiva.
+# 🍕 Chatbot Pizzeria - Sistema di ordinazione con AI
 
-## 📋 Caratteristiche Principali
+Un sistema completo per la gestione delle ordinazioni di una pizzeria, che combina un'interfaccia conversazionale AI per i clienti e una dashboard amministrativa per il personale della pizzeria.
 
-- 🤖 Interfaccia conversazionale basata su AI per ordinare pizze
-- 📊 Sistema RAG (Retrieval Augmented Generation) per gestire il menù dinamicamente
-- 👤 Profilazione clienti per esperienze personalizzate
-- 🔄 Function calling per connettere l'AI a database e sistemi esterni
-- 🧾 Creazione automatica di comande strutturate
+## 📋 Panoramica
 
-## 🛠️ Tecnologie Utilizzate
+Questo progetto rappresenta un'evoluzione dalle semplici applicazioni basate su chatbot a una soluzione completa per la gestione di una pizzeria:
 
-- **Python 3.9+**: Linguaggio di programmazione principale
-- **OpenAI API**: Integrazione con ChatGPT per l'interfaccia conversazionale
-- **RAG (Retrieval Augmented Generation)**: Per memorizzare e recuperare informazioni dal menù
-- **Function Calling**: Per consentire all'AI di interagire con sistemi esterni
-- **Vector Database**: Per lo spazio vettoriale del menù (es. Chroma, Pinecone)
+- **Versione 1.0**: Chatbot semplice che utilizzava RAG (Retrieval Augmented Generation) su file di testo per il menu
+- **Versione 2.0** (attuale): Sistema completo con database, frontend moderno, dashboard amministrativa e gestione ordini
 
-## 📁 Struttura del Progetto
+## 🌟 Funzionalità principali
 
-```
-PizzaBot-AI/
-├── main.py           # Inizializzazione agente e sistema RAG 
-├── ordina.py         # Gestione acquisizione ordini e dati cliente
-├── profilo.py        # Organizzazione comande e profilazione clienti
-├── menu/             # File di configurazione del menù
-├── database/         # Database locale per test
-└── requirements.txt  # Dipendenze Python
-```
+### 🤖 Interfaccia cliente
+- **Assistente conversazionale**: Interagisce con i clienti in modo naturale, guidando l'esperienza di ordinazione
+- **Visualizzazione menu**: Mostra automaticamente il menu all'inizio della conversazione o su richiesta
+- **Processo di ordinazione guidato**: Accompagna il cliente nella scelta di pizze, fritti, bevande
+- **Raccolta informazioni di consegna**: Gestisce indirizzo, telefono e modalità di pagamento
+- **Conferma ordine**: Fornisce un riepilogo completo dell'ordine e tempo di attesa stimato
 
-### Componenti Principali:
+### 📊 Dashboard amministrativa
+- **Login sicuro**: Protezione dell'area amministrativa con autenticazione
+- **Statistiche in tempo reale**: Visualizzazione di ordini totali, fatturato, ordine medio
+- **Grafici interattivi**: Analisi delle vendite per tipo di pizza e andamento temporale
+- **Lista ordini**: Tabella degli ordini recenti con dettagli completi
+- **Stampa comande**: Possibilità di stampare le comande per la cucina
 
-- **main.py**: Punto di ingresso dell'applicazione. Inizializza l'agente AI, carica il menù nello spazio vettoriale RAG e avvia il processo di ordinazione.
+### 🔄 Backend intelligente
+- **Estrazione menu da database**: Il menu viene caricato direttamente da Supabase
+- **Gestione conversazionale**: Mantiene il contesto della conversazione per un'esperienza fluida
+- **Riconoscimento delle intenzioni**: Identifica automaticamente le richieste del cliente
+- **Persistenza dati**: Salvataggio completo di ordini e profili cliente su Supabase
 
-- **ordina.py**: Gestisce il dialogo di acquisizione dell'ordine, raccoglie preferenze, gestisce modifiche agli ingredienti e raccoglie i dati del cliente.
+## 🔧 Architettura e componenti
 
-- **profilo.py**: Organizza tutte le informazioni raccolte in una comanda strutturata, aggiorna o crea il profilo cliente con preferenze e cronologia ordini.
+### 🧩 Struttura del progetto
+- **`main.py`**: Server FastAPI principale, gestisce richieste API e integrazione OpenAI
+- **`ordine.py`**: Gestisce il flusso di ordinazione e la logica conversazionale
+- **`profilo.py`**: Gestisce i dati dei clienti e la formattazione delle comande
+- **`sup.py`**: Modulo di sicurezza che centralizza tutte le interazioni con Supabase
+- **Frontend**:
+  - `index.html`: Interfaccia conversazionale per il cliente
+  - `login.html`: Pagina di accesso per l'area amministrativa
+  - `dashboard.html`: Dashboard per visualizzare statistiche e gestire ordini
 
-## ⚙️ Installazione
+### 🗄️ Database (Supabase)
+- **`menu_pizzeria`**: Contiene tutti i prodotti disponibili con categorie, prezzi e descrizioni
+- **`comande`**: Archivio degli ordini completati con dettagli e stato
+- **`clienti`**: Informazioni dei clienti per consegne future
 
+### 🔌 Integrazione
+- **OpenAI**: Per la gestione delle conversazioni naturali
+- **Supabase**: Database sicuro per la persistenza dei dati
+- **FastAPI**: Backend veloce e scalabile
+- **Chart.js**: Visualizzazione dei dati nella dashboard
+
+## 📦 Installazione
+
+### Prerequisiti
+- Python 3.9+
+- Account Supabase
+- Chiave API OpenAI
+
+### Configurazione
 1. Clona il repository:
    ```bash
-   git clone https://github.com/username/PizzaBot-AI.git
-   cd PizzaBot-AI
+   git clone https://github.com/yourusername/chatbot-pizzeria.git
+   cd chatbot-pizzeria
    ```
 
 2. Installa le dipendenze:
@@ -50,57 +73,88 @@ PizzaBot-AI/
    pip install -r requirements.txt
    ```
 
-3. Configura le variabili d'ambiente per le API di OpenAI:
-   ```bash
-   export OPENAI_API_KEY="your-api-key"
+3. Crea un file `.env` nella directory principale con:
+   ```
+   OPENAI_API_KEY=your_openai_api_key
+   OPENAI_MODEL=gpt-4o-mini
+   SUPABASE_URL=your_supabase_url
+   SUPABASE_KEY=your_supabase_key
    ```
 
-4. Personalizza il file del menù nella cartella `menu/` secondo le tue esigenze.
+4. Configura il database Supabase:
+   - Crea una tabella `menu_pizzeria` con campi: nome, prezzo, descrizione, categoria
+   - Crea una tabella `comande` per gli ordini
+   - Crea una tabella `clienti` per i dati cliente
 
-## 🚀 Utilizzo
-
-Avvia l'applicazione:
+### Avvio
+Avvia il server con:
 ```bash
 python main.py
 ```
+L'applicazione sarà disponibile su `http://localhost:5000`
 
-L'agente inizierà a interagire con l'utente, guidandolo attraverso il processo di ordinazione in linguaggio naturale.
+## 📱 Guida all'uso
 
-### Esempio di interazione:
+### Per i clienti
+1. Apri l'applicazione nel browser
+2. Inizia a conversare con il chatbot
+3. Il menu verrà mostrato automaticamente all'inizio
+4. Segui il flusso guidato per ordinare:
+   - Scegli le pizze
+   - Aggiungi eventuali fritti
+   - Aggiungi bevande
+   - Fornisci i dati per la consegna
+   - Conferma l'ordine
 
-```
-PizzaBot: Benvenuto alla Pizzeria AI! Cosa posso ordinare per te oggi?
-Cliente: Vorrei una margherita con extra mozzarella e una bibita.
-PizzaBot: Ottima scelta! Una margherita con extra mozzarella. 
-         Quale bibita preferisci? Abbiamo Coca-Cola, Fanta, Sprite...
-Cliente: Una Coca-Cola media.
-...
-```
+### Per l'amministrazione pizzeria
+1. Accedi alla dashboard usando:
+   - Username: `Ciao`
+   - Password: `12345678`
+2. Visualizza le statistiche in tempo reale
+3. Controlla gli ordini recenti
+4. Stampa le comande cliccando sul pulsante di stampa
+5. Esci con il pulsante Logout
 
-## 📱 Roadmap Futura (v2.0)
+## 🔍 Dettagli tecnici
 
-- [ ] Sviluppo di un'applicazione web/mobile completa
-- [ ] Dashboard per la gestione ordini lato pizzeria
-- [ ] Interfaccia personalizzata per i clienti
-- [ ] Integrazione con database cloud
-- [ ] Sistema di analisi predittiva per ottimizzare inventario
-- [ ] Notifiche push per aggiornamenti sullo stato dell'ordine
-- [ ] Integrazione con sistemi di pagamento online
+### Ciclo di vita di un ordine
+1. Il cliente avvia la conversazione
+2. L'agente mostra automaticamente il menu
+3. `ordine.py` gestisce il flusso conversazionale
+4. I dati vengono raccolti e validati in tempo reale
+5. L'ordine completato viene salvato su Supabase
+6. Il personale visualizza e processa l'ordine dalla dashboard
 
-## 🤝 Contributi
+### Gestione del contesto
+- Ogni sessione utente mantiene un ID univoco
+- La conversazione viene memorizzata per mantenere il contesto
+- Il sistema ricorda le scelte precedenti e guida verso i passaggi successivi
 
-I contributi sono benvenuti! Se desideri partecipare allo sviluppo:
+### Sicurezza
+- Tutte le interazioni con il database sono centralizzate in `sup.py`
+- L'autenticazione protegge l'accesso alla dashboard
+- Non vengono memorizzate informazioni sensibili dei clienti oltre quelle necessarie per la consegna
 
-1. Fai un fork del progetto
-2. Crea un nuovo branch (`git checkout -b feature/amazing-feature`)
-3. Effettua i tuoi cambiamenti e commit (`git commit -m 'Aggiunge una funzionalità incredibile'`)
-4. Pusha il branch (`git push origin feature/amazing-feature`)
-5. Apri una Pull Request
+## 🚀 Casi d'uso
+
+### Pizzeria con elevato volume di ordini telefonici
+Il sistema riduce il carico di lavoro del personale gestendo automaticamente gli ordini più semplici, liberando i dipendenti per attività a maggior valore aggiunto.
+
+### Pizzerie con servizio di consegna
+Il sistema raccoglie automaticamente tutti i dati necessari per la consegna, riducendo gli errori e migliorando l'efficienza.
+
+### Pizzerie con analisi dei dati
+La dashboard fornisce statistiche in tempo reale che aiutano a ottimizzare il menu, gestire l'inventario e pianificare le promozioni.
+
+## 🔮 Sviluppi futuri
+
+- **Integrazione con sistemi POS**: Collegamento diretto con sistemi di cassa esistenti
+- **Gestione multi-lingua**: Supporto per clienti internazionali
+- **App mobile dedicata**: Versione nativa per iOS e Android
+- **Gestione inventario**: Monitoraggio automatico delle scorte
+- **Sistema di fidelizzazione**: Programma punti e coupon per clienti abituali
+- **Previsioni di domanda**: Utilizzo di ML per prevedere picchi di ordini
 
 ## 📄 Licenza
 
-Questo progetto è distribuito con licenza MIT
-
----
-
-⭐️ Se questo progetto ti è utile, mettici una stella! ⭐️
+Questo progetto è rilasciato sotto la licenza MIT.
